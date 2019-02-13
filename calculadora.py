@@ -23,4 +23,6 @@ def calcula(x):
 
     return resultado
 
-print(calcula("     -110+ 798     +435   -     123    "))
+print('Expressão matemática:')
+expressao = input()
+print("O resultado é: ", calcula(expressao))
