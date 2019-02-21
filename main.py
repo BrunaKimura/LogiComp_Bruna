@@ -11,31 +11,39 @@ class Tokenizer:
 
     def selectNext(self):
         word = ""
-        while self.position<len(self.origin) and self.origin[self.position].isdigit():
-            word+=self.origin[self.position]
+
+        while self.position<len(self.origin) and self.origin[self.position].isspace():
             self.position+=1
 
         if self.position == len(self.origin):
             new_token = Token("eof", "")
-            # self.actual = new_token
+            word = 'eof'
+            self.actual = new_token
+
+        while self.position<len(self.origin) and self.origin[self.position].isdigit():
+            word+=self.origin[self.position]
+            self.position+=1
+
+        if word == 'eof':
+            pass
 
         elif word == "":
             if self.origin[self.position] == '+':
                 new_token = Token("plus", "+")
-                # self.actual = new_token
+                self.actual = new_token
                 self.position+=1
 
             elif self.origin[self.position] == '-':
                 new_token = Token("minus", "-")
-                # self.actual = new_token
+                self.actual = new_token
                 self.position+=1
 
             else:
                 raise ValueError("token inexistente")
         else:
-            new_token = Token("int", word)
-            self.position+=1
-            # self.actual = new_token
+            new_token = Token("int",int(word))
+            # self.position+=1
+            self.actual = new_token
 
         return new_token
 
@@ -66,10 +74,10 @@ class Parser:
 
     def run(code):
         Parser.tokens = Tokenizer(code)
-        Parser.parserExpression()
+        a = Parser.parserExpression()
+        print(a)
 
-a = Parser.run("1+2")
-print(a)
+Parser.run("789        +345    -       123")
 
 
 
