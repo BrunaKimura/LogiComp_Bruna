@@ -75,7 +75,11 @@ class Parser:
     def run(code):
         Parser.tokens = Tokenizer(code)
         a = Parser.parserExpression()
-        return a
+        if Parser.tokens.actual.type == "eof" :
+            return a
+        else:
+            raise ValueError("expressão inválida: Espaço inesperado.")
+
 
 entrada = input("Digite a expressão: ")
 
