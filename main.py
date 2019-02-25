@@ -77,7 +77,11 @@ class Parser:
         a = Parser.parserExpression()
         return a
 
-Parser.run("1+2")
+entrada = input("Digite a expressão: ")
+
+saida = Parser.run(entrada)
+
+print('Resultado: {0}'.format(saida))
 
 
 
