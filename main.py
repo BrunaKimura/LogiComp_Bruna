@@ -75,9 +75,9 @@ class Parser:
     def run(code):
         Parser.tokens = Tokenizer(code)
         a = Parser.parserExpression()
-        print(a)
+        return a
 
-Parser.run("789        +345    -       123")
+Parser.run("1+2")
 
 
 
