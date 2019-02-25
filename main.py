@@ -38,39 +38,62 @@ class Tokenizer:
                 self.actual = new_token
                 self.position+=1
 
+            elif self.origin[self.position] == '*':
+                new_token = Token("mult", "*")
+                self.actual = new_token
+                self.position+=1
+
+            elif self.origin[self.position] == '/':
+                new_token = Token("div", "/")
+                self.actual = new_token
+                self.position+=1
+
             else:
                 raise ValueError("token inexistente")
         else:
             new_token = Token("int",int(word))
-            # self.position+=1
             self.actual = new_token
 
         return new_token
 
 
 class Parser:
-    def parserExpression():
+    
+    def parserTerm():
         if Parser.tokens.actual.type == 'int':
             resultado = Parser.tokens.actual.value
             Parser.tokens.selectNext()
-            while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus':
-                if Parser.tokens.actual.type == 'plus':
+            while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div':
+                if Parser.tokens.actual.type == 'mult':
                     Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'int':
-                        resultado += Parser.tokens.actual.value
+                        resultado *= Parser.tokens.actual.value
                     else:
-                        raise ValueError("erro ao somar")
-                elif Parser.tokens.actual.type == 'minus':
+                        raise ValueError("erro ao multiplicar")
+                elif Parser.tokens.actual.type == 'div':
                     Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'int':
-                        resultado -= Parser.tokens.actual.value
+                        resultado //= Parser.tokens.actual.value
                     else:
-                        raise ValueError("erro ao subtrair")
+                        raise ValueError("erro ao dividir")
                 Parser.tokens.selectNext()
         else:
             raise ValueError("erro: expressão iniciada em 0")
 
         return resultado
+
+    def parserExpression():
+        resultado = Parser.parserTerm()
+        while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus':
+            if Parser.tokens.actual.type == 'plus':
+                Parser.tokens.selectNext()
+                resultado+=Parser.parserTerm()
+            if Parser.tokens.actual.type == 'minus':
+                Parser.tokens.selectNext()
+                resultado-=Parser.parserTerm()
+            
+        return resultado
+
 
     def run(code):
         Parser.tokens = Tokenizer(code)
