@@ -103,6 +103,13 @@ class Parser:
         else:
             raise ValueError("expressão inválida: Espaço inesperado.")
 
+class PrePro:
+
+    def filter_t(code):
+        
+        
+
+        
 
 entrada = input("Digite a expressão: ")
 
