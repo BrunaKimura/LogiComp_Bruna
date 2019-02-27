@@ -1,3 +1,5 @@
+import re
+
 class Token:
     def __init__(self, t, v):
         self.type = t
@@ -78,7 +80,7 @@ class Parser:
                         raise ValueError("erro ao dividir")
                 Parser.tokens.selectNext()
         else:
-            raise ValueError("erro: expressão iniciada em 0")
+            raise ValueError("erro: expressão não iniciado com um inteiro")
 
         return resultado
 
@@ -96,7 +98,8 @@ class Parser:
 
 
     def run(code):
-        Parser.tokens = Tokenizer(code)
+        new_code = PrePro.filter_t(code)
+        Parser.tokens = Tokenizer(new_code)
         a = Parser.parserExpression()
         if Parser.tokens.actual.type == "eof" :
             return a
@@ -106,13 +109,29 @@ class Parser:
 class PrePro:
 
     def filter_t(code):
-        
-        
+        #fazendo com condições
+        # coment = False
+        # new_code = ''
+        # for e in code:
+        #     if coment == False:
+        #         if e == "'":
+        #             coment = True
+        #             pass
+        #         else:
+        #             new_code += e
+        #     else:
+        #         if e == "\n":
+        #             coment = False
+        #         else: 
+        #             pass
+        # return new_code
 
-        
+        #fazendo com expressoes regulares
 
-entrada = input("Digite a expressão: ")
+        return re.sub("'.*\n", "" , code, count=0, flags=0)
 
+entrada = input("Digite a expressão: ") + "\n"
+entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
 
 print('Resultado: {0}'.format(saida))
