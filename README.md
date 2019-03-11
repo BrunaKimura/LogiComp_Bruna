@@ -7,8 +7,8 @@ Insper | 7° semestre | Engenharia de Computação
 
 ## Diagrama Sintático
 
-![alt text](img/diagrama_sintatico2.jpeg)
+![alt text](img/diagrama_sintatico3.jpeg)
 
 ## EBNF
 
-![alt text](img/EBNF1.jpeg)
+![alt text](img/EBNF3.jpeg)
