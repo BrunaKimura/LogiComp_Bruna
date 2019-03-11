@@ -49,6 +49,16 @@ class Tokenizer:
                 new_token = Token("div", "/")
                 self.actual = new_token
                 self.position+=1
+            
+            elif self.origin[self.position] == '(':
+                new_token = Token("(", "(")
+                self.actual = new_token
+                self.position+=1
+            
+            elif self.origin[self.position] == ')':
+                new_token = Token(")", ")")
+                self.actual = new_token
+                self.position+=1
 
             else:
                 raise ValueError("token inexistente")
@@ -60,29 +70,50 @@ class Tokenizer:
 
 
 class Parser:
-    
-    def parserTerm():
+
+    def parserFactor():
+        resultado = 0
         if Parser.tokens.actual.type == 'int':
             resultado = Parser.tokens.actual.value
             Parser.tokens.selectNext()
-            while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div':
-                if Parser.tokens.actual.type == 'mult':
-                    Parser.tokens.selectNext()
-                    if Parser.tokens.actual.type == 'int':
-                        resultado *= Parser.tokens.actual.value
-                    else:
-                        raise ValueError("erro ao multiplicar")
-                elif Parser.tokens.actual.type == 'div':
-                    Parser.tokens.selectNext()
-                    if Parser.tokens.actual.type == 'int':
-                        resultado //= Parser.tokens.actual.value
-                    else:
-                        raise ValueError("erro ao dividir")
+
+        elif Parser.tokens.actual.type == '(':
+            Parser.tokens.selectNext()
+            resultado = Parser.parserExpression()
+            if Parser.tokens.actual.type == ')':
                 Parser.tokens.selectNext()
+            else:
+                raise ValueError("erro: não fechou parênteses")
+            
+
+        elif Parser.tokens.actual.type == 'plus':
+            Parser.tokens.selectNext()
+            resultado += Parser.parserFactor()
+            
+            
+        elif Parser.tokens.actual.type == 'minus':
+            Parser.tokens.selectNext()
+            resultado -= Parser.parserFactor()
+            
+
         else:
-            raise ValueError("erro: expressão não iniciado com um inteiro")
+            raise ValueError("erro: token inexistente")
 
         return resultado
+
+    
+    def parserTerm():
+        resultado = Parser.parserFactor()
+        while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div':
+            if Parser.tokens.actual.type == 'mult':
+                Parser.tokens.selectNext()
+                resultado*=Parser.parserFactor()
+            if Parser.tokens.actual.type == 'div':
+                Parser.tokens.selectNext()
+                resultado//=Parser.parserFactor()
+            
+        return resultado
+        
 
     def parserExpression():
         resultado = Parser.parserTerm()
@@ -109,25 +140,6 @@ class Parser:
 class PrePro:
 
     def filter_t(code):
-        #fazendo com condições
-        # coment = False
-        # new_code = ''
-        # for e in code:
-        #     if coment == False:
-        #         if e == "'":
-        #             coment = True
-        #             pass
-        #         else:
-        #             new_code += e
-        #     else:
-        #         if e == "\n":
-        #             coment = False
-        #         else: 
-        #             pass
-        # return new_code
-
-        #fazendo com expressoes regulares
-
         return re.sub("'.*\n", "" , code, count=0, flags=0)
 
 entrada = input("Digite a expressão: ") + "\n"
