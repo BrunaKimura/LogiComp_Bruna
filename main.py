@@ -72,9 +72,8 @@ class Tokenizer:
 class Parser:
 
     def parserFactor():
-        resultado = 0
         if Parser.tokens.actual.type == 'int':
-            resultado = Parser.tokens.actual.value
+            resultado = IntVal(Parser.tokens.actual.value, [])
             Parser.tokens.selectNext()
 
         elif Parser.tokens.actual.type == '(':
@@ -88,12 +87,14 @@ class Parser:
 
         elif Parser.tokens.actual.type == 'plus':
             Parser.tokens.selectNext()
-            resultado += Parser.parserFactor()
+            children = [Parser.parserFactor()]
+            resultado = UnOp('+', children)
             
             
         elif Parser.tokens.actual.type == 'minus':
             Parser.tokens.selectNext()
-            resultado -= Parser.parserFactor()
+            children = [Parser.parserFactor()]
+            resultado = UnOp('-', children)
             
 
         else:
@@ -107,10 +108,13 @@ class Parser:
         while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div':
             if Parser.tokens.actual.type == 'mult':
                 Parser.tokens.selectNext()
-                resultado*=Parser.parserFactor()
+                children = [resultado, Parser.parserFactor()]
+                resultado = BinOp('*', children)
+
             if Parser.tokens.actual.type == 'div':
                 Parser.tokens.selectNext()
-                resultado//=Parser.parserFactor()
+                children = [resultado, Parser.parserFactor()]
+                resultado = BinOp('/', children)
             
         return resultado
         
@@ -120,10 +124,13 @@ class Parser:
         while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus':
             if Parser.tokens.actual.type == 'plus':
                 Parser.tokens.selectNext()
-                resultado+=Parser.parserTerm()
+                children = [resultado, Parser.parserTerm()]
+                resultado = BinOp('+', children)
+
             if Parser.tokens.actual.type == 'minus':
                 Parser.tokens.selectNext()
-                resultado-=Parser.parserTerm()
+                children = [resultado, Parser.parserTerm()]
+                resultado = BinOp('-', children)
             
         return resultado
 
@@ -137,16 +144,69 @@ class Parser:
         else:
             raise ValueError("expressão inválida: Espaço inesperado.")
 
+class Node:
+    def __init__(self):
+        self.value = None
+        self.children = []
+
+    def Evaluate(self):
+        pass
+
+class BinOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self):
+        if self.value == '+':
+            return self.children[0].Evaluate() + self.children[1].Evaluate()
+        elif self.value == '-':
+            return self.children[0].Evaluate() - self.children[1].Evaluate()
+        elif self.value == '*':
+            return self.children[0].Evaluate() * self.children[1].Evaluate()
+        elif self.value == '/':
+            return self.children[0].Evaluate() // self.children[1].Evaluate()
+
+class UnOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self):
+        if self.value == '-':
+            return -self.children[0].Evaluate()
+        else:
+            return self.children[0].Evaluate()
+
+class IntVal(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self):
+        return self.value
+
+class NoOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self):
+        pass
+                
+
 class PrePro:
 
     def filter_t(code):
         return re.sub("'.*\n", "" , code, count=0, flags=0)
 
-entrada = input("Digite a expressão: ") + "\n"
+with open ('entrada.vbs', 'r') as file:
+    entrada = file.read() + "\n"
+
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
 
-print('Resultado: {0}'.format(saida))
+print('Resultado: {0}'.format(saida.Evaluate()))
 
 
 
