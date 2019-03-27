@@ -1,4 +1,6 @@
 import re
+reserved = ["PRINT", "BEGIN", "END"]
+PRINT, BEGIN, END = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -60,6 +62,33 @@ class Tokenizer:
                 self.actual = new_token
                 self.position+=1
 
+            elif self.origin[self.position] == '=':
+                new_token = Token("assignment", "=")
+                self.actual = new_token
+                self.position+=1
+                
+            elif self.origin[self.position] == '\n':
+                new_token = Token("lb", "\n")
+                self.actual = new_token
+                self.position+=1
+
+            elif self.origin[self.position].isalpha():
+                word+=self.origin[self.position]
+                self.position+=1
+                while self.position<len(self.origin) and (self.origin[self.position].isdigit() or self.origin[self.position].isalpha() or self.origin[self.position]=="_"):
+                    word+=self.origin[self.position]
+                    self.position+=1
+
+                new_word = word.upper()
+                
+                if word in reserved:
+                    new_token = Token(new_word, new_word)
+                    self.actual = new_token
+                else: 
+                    new_token = Token("identifier", new_word)
+                    self.actual = new_token
+
+
             else:
                 raise ValueError("token inexistente")
         else:
@@ -70,6 +99,39 @@ class Tokenizer:
 
 
 class Parser:
+
+    def parserStatements():
+        if Parser.tokens.actual.type == 'BEGIN':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'lb':
+                Parser.tokens.selectNext()
+                while Parser.tokens.actual.type != 'END'
+                    Parser.parserStatement()
+                    if Parser.tokens.actual.type != 'lb':
+                        raise ValueError("erro: não quebrou a linha")
+            else:
+                raise ValueError("erro: não quebrou a linha")
+        else:
+            raise ValueError("erro: não abriu BEGIN")
+
+    def parserStatement():
+        if Parser.tokens.actual.type == 'identifier':
+            
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'assignment':
+                Parser.tokens.selectNext()
+                Parser.parserExpression()
+            else:
+                raise ValueError("erro: sem sinal de receber(=)")
+        elif Parser.tokens.actual.type == 'PRINT':
+            Parser.tokens.selectNext()
+            Parser.parserExpression()
+        elif Parser.tokens.actual.type == 'BEGIN':
+            pass #parseStatement
+        elif:
+            pass #NoOp
+            
+            
 
     def parserFactor():
         if Parser.tokens.actual.type == 'int':
@@ -96,6 +158,8 @@ class Parser:
             children = [Parser.parserFactor()]
             resultado = UnOp('-', children)
             
+        elif Parser.tokens.actual.type == 'identifier':
+            ???????????????????????????????????????????????????????????????????????????????????
 
         else:
             raise ValueError("erro: token inexistente")
@@ -193,12 +257,27 @@ class NoOp(Node):
 
     def Evaluate(self):
         pass
+
+class Variaveis:
+    def __init__(self):
+        self.dic_variavel = {}
+
+    def getter(self, var):
+        if var in self.dic_variavel:
+            return self.dic_variavel[var]
+        else:
+            raise ValueError("erro: variável inexistente")
+
+    def setter(self, var, val):
+        self.dic_variavel[var] = val
+
                 
 
 class PrePro:
 
     def filter_t(code):
         return re.sub("'.*\n", "" , code, count=0, flags=0)
+
 
 with open ('entrada.vbs', 'r') as file:
     entrada = file.read() + "\n"
@@ -207,7 +286,3 @@ entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
 
 print('Resultado: {0}'.format(saida.Evaluate()))
-
-
-
-
