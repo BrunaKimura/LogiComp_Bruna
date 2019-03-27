@@ -277,6 +277,23 @@ class PrintOp(Node):
     def Evaluate(self, st):
         return st.setter(self.children[0].Evaluate(st))
 
+class IdentifierOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        return st.getter(self.value)
+
+class StatementsOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        for f in self.children:
+            f.Evaluate(st)
+
 
 #Dicionario de variaveis
 class SymbolTable:
