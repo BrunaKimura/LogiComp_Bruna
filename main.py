@@ -208,12 +208,14 @@ class Parser:
         else:
             raise ValueError("expressão inválida: Espaço inesperado.")
 
+
+#nós e operadores
 class Node:
     def __init__(self):
         self.value = None
         self.children = []
 
-    def Evaluate(self):
+    def Evaluate(self, st)):
         pass
 
 class BinOp(Node):
@@ -221,33 +223,33 @@ class BinOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self):
+    def Evaluate(self, st)):
         if self.value == '+':
-            return self.children[0].Evaluate() + self.children[1].Evaluate()
+            return self.children[0].Evaluate(st) + self.children[1].Evaluate(st)
         elif self.value == '-':
-            return self.children[0].Evaluate() - self.children[1].Evaluate()
+            return self.children[0].Evaluate(st) - self.children[1].Evaluate(st)
         elif self.value == '*':
-            return self.children[0].Evaluate() * self.children[1].Evaluate()
+            return self.children[0].Evaluate(st) * self.children[1].Evaluate(st)
         elif self.value == '/':
-            return self.children[0].Evaluate() // self.children[1].Evaluate()
+            return self.children[0].Evaluate(st) // self.children[1].Evaluate(st)
 
 class UnOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self):
+    def Evaluate(self, st)):
         if self.value == '-':
-            return -self.children[0].Evaluate()
+            return -self.children[0].Evaluate(st)
         else:
-            return self.children[0].Evaluate()
+            return self.children[0].Evaluate(st)
 
 class IntVal(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self):
+    def Evaluate(self, st)):
         return self.value
 
 class NoOp(Node):
@@ -255,10 +257,29 @@ class NoOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self):
+    def Evaluate(self, st)):
         pass
 
-class Variaveis:
+
+class AssignmentOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st)):
+        return st.setter(self.children[0].value, self.children[1].Evaluate(st))
+
+class PrintOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        return st.setter(self.children[0].Evaluate(st))
+
+
+#Dicionario de variaveis
+class SymbolTable:
     def __init__(self):
         self.dic_variavel = {}
 
@@ -285,4 +306,6 @@ with open ('entrada.vbs', 'r') as file:
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
 
-print('Resultado: {0}'.format(saida.Evaluate()))
+st = SymbolTable()
+
+print('Resultado: {0}'.format(saida.Evaluate(st)))
