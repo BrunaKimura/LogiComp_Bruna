@@ -1,3 +1,5 @@
 BEGIN
-a = 1+2
+a = 10
+b = 2
+PRINT a + b *4
 END     

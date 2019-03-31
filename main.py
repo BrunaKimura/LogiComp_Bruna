@@ -101,11 +101,14 @@ class Tokenizer:
 class Parser:
 
     def parserStatements():
+        resultado=None
         if Parser.tokens.actual.type == 'BEGIN':
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'lb':
                 Parser.tokens.selectNext()
                 while Parser.tokens.actual.type != 'END':
+                    if resultado != None:
+                        resultado.Evaluate(st)
                     resultado = Parser.parserStatement()
                     if Parser.tokens.actual.type != 'lb':
                         raise ValueError("erro: não quebrou a linha do statement")
