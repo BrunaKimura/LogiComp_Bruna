@@ -11,4 +11,4 @@ Insper | 7° semestre | Engenharia de Computação
 
 ## EBNF
 
-![alt text](img/EBNF3.jpeg)
+![alt text](img/EBNF4.jpeg)
