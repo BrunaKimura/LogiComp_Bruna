@@ -101,29 +101,20 @@ class Tokenizer:
 class Parser:
 
     def parserStatements():
-        resultado=None
+        lista_resultado=[]
         if Parser.tokens.actual.type == 'BEGIN':
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'lb':
                 Parser.tokens.selectNext()
                 while Parser.tokens.actual.type != 'END':
-                    if resultado != None:
-                        resultado.Evaluate(st)
-                    resultado = Parser.parserStatement()
+                    lista_resultado.append(Parser.parserStatement())
                     if Parser.tokens.actual.type != 'lb':
                         raise ValueError("erro: não quebrou a linha do statement")
                     else:
                         Parser.tokens.selectNext()
-                Parser.tokens.selectNext()
-                if Parser.tokens.actual.type == 'lb':
-                    Parser.tokens.selectNext()
 
-                if Parser.tokens.actual.type == 'eof':
-                    return resultado
-                
-                
-                else: 
-                    raise ValueError("erro: eof não encontrado")
+                return StatementsOp("statement", lista_resultado)
+
             else:
                 raise ValueError("erro: não quebrou a linha do begin")
         else:
@@ -145,7 +136,9 @@ class Parser:
             Parser.tokens.selectNext()
             resultado = PrintOp("PRINT", [Parser.parserExpression()])
         elif Parser.tokens.actual.type == 'BEGIN':
-            Parser.parserStatements
+            resultado = Parser.parserStatements()
+            Parser.tokens.selectNext()
+
         else:
             resultado = NoOp(0, [])
 
@@ -224,10 +217,13 @@ class Parser:
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
         a = Parser.parserStatements()
+        Parser.tokens.selectNext()
+        while Parser.tokens.actual.type == 'lb':
+            Parser.tokens.selectNext()
         if Parser.tokens.actual.type == "eof":
             return a
         else:
-            raise ValueError("expressão inválida: Espaço inesperado.")
+            raise ValueError("erro: eof não encontrado")
 
 
 #nós e operadores
@@ -296,8 +292,7 @@ class PrintOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        return self.children[0].Evaluate(st)
-        # return st.setter(self.children[0].Evaluate(st))
+        print(self.children[0].Evaluate(st))
 
 class IdentifierOp(Node):
     def __init__(self, valor, filho):
@@ -345,5 +340,4 @@ with open ('entrada.vbs', 'r') as file:
 
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
-
-print('Resultado: {0}'.format(saida.Evaluate(st)))
+saida.Evaluate(st)
