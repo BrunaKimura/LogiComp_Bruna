@@ -16,7 +16,7 @@ class Tokenizer:
     def selectNext(self):
         word = ""
 
-        while self.position<len(self.origin) and self.origin[self.position].isspace():
+        while self.position<len(self.origin) and self.origin[self.position].isspace() and self.origin[self.position]!="\n":
             self.position+=1
 
         if self.position == len(self.origin):
@@ -24,14 +24,19 @@ class Tokenizer:
             word = 'eof'
             self.actual = new_token
 
+            return new_token
+
+        if self.origin[self.position] == '\n':
+            new_token = Token("lb", "\n")
+            self.actual = new_token
+            self.position+=1
+            return new_token
+
         while self.position<len(self.origin) and self.origin[self.position].isdigit():
             word+=self.origin[self.position]
             self.position+=1
 
-        if word == 'eof':
-            pass
-
-        elif word == "":
+        if word == "":
             if self.origin[self.position] == '+':
                 new_token = Token("plus", "+")
                 self.actual = new_token
@@ -64,11 +69,6 @@ class Tokenizer:
 
             elif self.origin[self.position] == '=':
                 new_token = Token("assignment", "=")
-                self.actual = new_token
-                self.position+=1
-                
-            elif self.origin[self.position] == '\n':
-                new_token = Token("lb", "\n")
                 self.actual = new_token
                 self.position+=1
 
@@ -105,31 +105,48 @@ class Parser:
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'lb':
                 Parser.tokens.selectNext()
-                while Parser.tokens.actual.type != 'END'
-                    Parser.parserStatement()
+                while Parser.tokens.actual.type != 'END':
+                    resultado = Parser.parserStatement()
                     if Parser.tokens.actual.type != 'lb':
-                        raise ValueError("erro: não quebrou a linha")
+                        raise ValueError("erro: não quebrou a linha do statement")
+                    else:
+                        Parser.tokens.selectNext()
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == 'lb':
+                    Parser.tokens.selectNext()
+
+                if Parser.tokens.actual.type == 'eof':
+                    return resultado
+                
+                
+                else: 
+                    raise ValueError("erro: eof não encontrado")
             else:
-                raise ValueError("erro: não quebrou a linha")
+                raise ValueError("erro: não quebrou a linha do begin")
         else:
             raise ValueError("erro: não abriu BEGIN")
+        
+        
 
     def parserStatement():
         if Parser.tokens.actual.type == 'identifier':
-            
+            variavel = Parser.tokens.actual.value
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'assignment':
+                sinal = Parser.tokens.actual.value 
                 Parser.tokens.selectNext()
-                Parser.parserExpression()
+                resultado = AssignmentOp(sinal, [variavel, Parser.parserExpression()])    
             else:
                 raise ValueError("erro: sem sinal de receber(=)")
         elif Parser.tokens.actual.type == 'PRINT':
             Parser.tokens.selectNext()
-            Parser.parserExpression()
+            resultado = PrintOp("PRINT", [Parser.parserExpression()])
         elif Parser.tokens.actual.type == 'BEGIN':
-            pass #parseStatement
-        elif:
-            pass #NoOp
+            Parser.parserStatements
+        else:
+            resultado = NoOp(0, [])
+
+        return resultado
             
             
 
@@ -159,7 +176,8 @@ class Parser:
             resultado = UnOp('-', children)
             
         elif Parser.tokens.actual.type == 'identifier':
-            ???????????????????????????????????????????????????????????????????????????????????
+            resultado = IdentifierOp(Parser.tokens.actual.value, [])
+            Parser.tokens.selectNext()
 
         else:
             raise ValueError("erro: token inexistente")
@@ -202,8 +220,8 @@ class Parser:
     def run(code):
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
-        a = Parser.parserExpression()
-        if Parser.tokens.actual.type == "eof" :
+        a = Parser.parserStatements()
+        if Parser.tokens.actual.type == "eof":
             return a
         else:
             raise ValueError("expressão inválida: Espaço inesperado.")
@@ -215,7 +233,7 @@ class Node:
         self.value = None
         self.children = []
 
-    def Evaluate(self, st)):
+    def Evaluate(self, st):
         pass
 
 class BinOp(Node):
@@ -223,7 +241,7 @@ class BinOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self, st)):
+    def Evaluate(self, st):
         if self.value == '+':
             return self.children[0].Evaluate(st) + self.children[1].Evaluate(st)
         elif self.value == '-':
@@ -238,7 +256,7 @@ class UnOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self, st)):
+    def Evaluate(self, st):
         if self.value == '-':
             return -self.children[0].Evaluate(st)
         else:
@@ -249,7 +267,7 @@ class IntVal(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self, st)):
+    def Evaluate(self, st):
         return self.value
 
 class NoOp(Node):
@@ -257,7 +275,7 @@ class NoOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self, st)):
+    def Evaluate(self, st):
         pass
 
 
@@ -266,8 +284,8 @@ class AssignmentOp(Node):
         self.value = valor
         self.children = filho
 
-    def Evaluate(self, st)):
-        return st.setter(self.children[0].value, self.children[1].Evaluate(st))
+    def Evaluate(self, st):
+        return st.setter(self.children[0], self.children[1].Evaluate(st))
 
 class PrintOp(Node):
     def __init__(self, valor, filho):
@@ -275,7 +293,8 @@ class PrintOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        return st.setter(self.children[0].Evaluate(st))
+        return self.children[0].Evaluate(st)
+        # return st.setter(self.children[0].Evaluate(st))
 
 class IdentifierOp(Node):
     def __init__(self, valor, filho):
@@ -316,13 +335,12 @@ class PrePro:
     def filter_t(code):
         return re.sub("'.*\n", "" , code, count=0, flags=0)
 
+st = SymbolTable()
 
 with open ('entrada.vbs', 'r') as file:
     entrada = file.read() + "\n"
 
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
-
-st = SymbolTable()
 
 print('Resultado: {0}'.format(saida.Evaluate(st)))
