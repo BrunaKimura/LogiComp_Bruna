@@ -1,4 +1,6 @@
 import re
+import sys
+
 reserved = ["PRINT", "BEGIN", "END"]
 PRINT, BEGIN, END = reserved
 
@@ -335,7 +337,12 @@ class PrePro:
 
 st = SymbolTable()
 
-with open ('entrada.vbs', 'r') as file:
+if len(sys.argv) == 1:
+    raise ValueError("erro: arquivo de entrada não inserido ")
+script = sys.argv[0]
+filename = sys.argv[1]
+
+with open (filename, 'r') as file:
     entrada = file.read() + "\n"
 
 entrada = entrada.replace("\\n","\n")
