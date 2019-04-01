@@ -1,8 +1,8 @@
 import re
 import sys
 
-reserved = ["PRINT", "BEGIN", "END"]
-PRINT, BEGIN, END = reserved
+reserved = ["PRINT", "BEGIN", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND"]
+PRINT, BEGIN, END, OR, AND, INPUT, WHILE, IF, THEN, WEND = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -74,6 +74,16 @@ class Tokenizer:
                 self.actual = new_token
                 self.position+=1
 
+            elif self.origin[self.position] == '>':
+                new_token = Token(">", ">")
+                self.actual = new_token
+                self.position+=1
+
+            elif self.origin[self.position] == '<':
+                new_token = Token("<", "<")
+                self.actual = new_token
+                self.position+=1
+
             elif self.origin[self.position].isalpha():
                 word+=self.origin[self.position]
                 self.position+=1
@@ -103,24 +113,29 @@ class Tokenizer:
 class Parser:
 
     def parserStatements():
-        lista_resultado=[]
-        if Parser.tokens.actual.type == 'BEGIN':
+        lista_resultado = [Parser.parserStatement()]
+        while Parser.tokens.actual.type == 'lb':
             Parser.tokens.selectNext()
-            if Parser.tokens.actual.type == 'lb':
-                Parser.tokens.selectNext()
-                while Parser.tokens.actual.type != 'END':
-                    lista_resultado.append(Parser.parserStatement())
-                    if Parser.tokens.actual.type != 'lb':
-                        raise ValueError("erro: não quebrou a linha do statement")
-                    else:
-                        Parser.tokens.selectNext()
+            lista_resultado.append(Parser.parserStatement())
+            
+        return StatementsOp("statement", lista_resultado)
+        # if Parser.tokens.actual.type == 'BEGIN':
+        #     Parser.tokens.selectNext()
+        #     if Parser.tokens.actual.type == 'lb':
+        #         Parser.tokens.selectNext()
+        #         while Parser.tokens.actual.type != 'END':
+        #             lista_resultado.append(Parser.parserStatement())
+        #             if Parser.tokens.actual.type != 'lb':
+        #                 raise ValueError("erro: não quebrou a linha do statement")
+        #             else:
+        #                 Parser.tokens.selectNext()
 
-                return StatementsOp("statement", lista_resultado)
+        #         return StatementsOp("statement", lista_resultado)
 
-            else:
-                raise ValueError("erro: não quebrou a linha do begin")
-        else:
-            raise ValueError("erro: não abriu BEGIN")
+        #     else:
+        #         raise ValueError("erro: não quebrou a linha do begin")
+        # else:
+        #     raise ValueError("erro: não abriu BEGIN")
         
         
 
@@ -141,12 +156,88 @@ class Parser:
             resultado = Parser.parserStatements()
             Parser.tokens.selectNext()
 
+        elif Parser.tokens.actual.type == 'WHILE':
+            Parser.tokens.selectNext()
+            filho1 = Parser.parserRelExpression()
+            Parser.tokens.selectNext()
+            filho2 = Parser.parserStatements()
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'WEND':
+                resultado = WhileOp("while",[filho1, filho2])
+            else:
+                raise ValueError("erro: não fechou o while")
+
         else:
             resultado = NoOp(0, [])
 
         return resultado
+
+    def parserRelExpression():
+        valor1 = Parser.parserExpression()
+        if Parser.tokens.actual.type == "assigment":
+            Parser.tokens.selectNext()
+            valor2 = Parser.parserExpression()
+            resultado = BinOp("=", [valor1, valor2])
+            Parser.tokens.selectNext()
+
+        elif Parser.tokens.actual.type == ">":
+            Parser.tokens.selectNext()
+            valor2 = Parser.parserExpression()
+            resultado = BinOp(">", [valor1, valor2])
+            Parser.tokens.selectNext()
+
+        elif Parser.tokens.actual.type == "<":
+            Parser.tokens.selectNext()
+            valor2 = Parser.parserExpression()
+            resultado = BinOp("<", [valor1, valor2])
+            Parser.tokens.selectNext()
+
+        else:
+            raise ValueError("erro: expressão não identificada")
+
+        return resultado
+
+    def parserExpression():
+        resultado = Parser.parserTerm()
+        while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus' or Parser.tokens.actual.type == 'OR':
+            if Parser.tokens.actual.type == 'plus':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserTerm()]
+                resultado = BinOp('+', children)
+
+            if Parser.tokens.actual.type == 'minus':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserTerm()]
+                resultado = BinOp('-', children)
+
+            if Parser.tokens.actual.type == 'OR':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserTerm()]
+                resultado = BinOp('or', children)
             
+        return resultado
+
+
+    def parserTerm():
+        resultado = Parser.parserFactor()
+        while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div' or Parser.tokens.actual.type == 'AND':
+            if Parser.tokens.actual.type == 'mult':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserFactor()]
+                resultado = BinOp('*', children)
+
+            if Parser.tokens.actual.type == 'div':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserFactor()]
+                resultado = BinOp('/', children)
+
+            if Parser.tokens.actual.type == 'AND':
+                Parser.tokens.selectNext()
+                children = [resultado, Parser.parserFactor()]
+                resultado = BinOp('and', children)
             
+        return resultado
+
 
     def parserFactor():
         if Parser.tokens.actual.type == 'int':
@@ -177,41 +268,13 @@ class Parser:
             resultado = IdentifierOp(Parser.tokens.actual.value, [])
             Parser.tokens.selectNext()
 
+        elif Parser.tokens.actual.type == 'INPUT':
+            resultado = InputOp('',[])
+            Parser.tokens.selectNext()
+
         else:
             raise ValueError("erro: token inexistente")
 
-        return resultado
-
-    
-    def parserTerm():
-        resultado = Parser.parserFactor()
-        while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div':
-            if Parser.tokens.actual.type == 'mult':
-                Parser.tokens.selectNext()
-                children = [resultado, Parser.parserFactor()]
-                resultado = BinOp('*', children)
-
-            if Parser.tokens.actual.type == 'div':
-                Parser.tokens.selectNext()
-                children = [resultado, Parser.parserFactor()]
-                resultado = BinOp('/', children)
-            
-        return resultado
-        
-
-    def parserExpression():
-        resultado = Parser.parserTerm()
-        while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus':
-            if Parser.tokens.actual.type == 'plus':
-                Parser.tokens.selectNext()
-                children = [resultado, Parser.parserTerm()]
-                resultado = BinOp('+', children)
-
-            if Parser.tokens.actual.type == 'minus':
-                Parser.tokens.selectNext()
-                children = [resultado, Parser.parserTerm()]
-                resultado = BinOp('-', children)
-            
         return resultado
 
 
