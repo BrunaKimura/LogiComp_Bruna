@@ -1,8 +1,8 @@
 import re
 import sys
 
-reserved = ["PRINT", "BEGIN", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND"]
-PRINT, BEGIN, END, OR, AND, INPUT, WHILE, IF, THEN, WEND = reserved
+reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT"]
+PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -119,25 +119,7 @@ class Parser:
             lista_resultado.append(Parser.parserStatement())
             
         return StatementsOp("statement", lista_resultado)
-        # if Parser.tokens.actual.type == 'BEGIN':
-        #     Parser.tokens.selectNext()
-        #     if Parser.tokens.actual.type == 'lb':
-        #         Parser.tokens.selectNext()
-        #         while Parser.tokens.actual.type != 'END':
-        #             lista_resultado.append(Parser.parserStatement())
-        #             if Parser.tokens.actual.type != 'lb':
-        #                 raise ValueError("erro: não quebrou a linha do statement")
-        #             else:
-        #                 Parser.tokens.selectNext()
-
-        #         return StatementsOp("statement", lista_resultado)
-
-        #     else:
-        #         raise ValueError("erro: não quebrou a linha do begin")
-        # else:
-        #     raise ValueError("erro: não abriu BEGIN")
-        
-        
+              
 
     def parserStatement():
         if Parser.tokens.actual.type == 'identifier':
@@ -156,9 +138,8 @@ class Parser:
         elif Parser.tokens.actual.type == 'WHILE':
             Parser.tokens.selectNext()
             filho1 = Parser.parserRelExpression()
-            Parser.tokens.selectNext()
             filho2 = Parser.parserStatements()
-            Parser.tokens.selectNext()
+
             if Parser.tokens.actual.type == 'WEND':
                 resultado = WhileOp("while",[filho1, filho2])
             else:
@@ -167,23 +148,29 @@ class Parser:
         elif Parser.tokens.actual.type == 'IF':
             lista_filhos = []
             Parser.tokens.selectNext()
-            lista_filhos.append(Parser.parserRelExpression()) 
-            Parser.tokens.selectNext()
-            lista_filhos.append(Parser.parserStatements())
-            Parser.tokens.selectNext()
-            if Parser.tokens.actual.type == 'ELSE':
+            lista_filhos.append(Parser.parserRelExpression())
+            if Parser.tokens.actual.type == 'THEN':
                 Parser.tokens.selectNext()
                 lista_filhos.append(Parser.parserStatements())
-            
-            if Parser.tokens.actual.type == 'END':
-                Parser.tokens.selectNext()
-                if Parser.tokens.actual.type == 'IF':
-                    resultado = IfOp("IF", lista_filhos)
+
+                if Parser.tokens.actual.type == 'ELSE':
+                    Parser.tokens.selectNext()
+                    lista_filhos.append(Parser.parserStatements())
+
+                if Parser.tokens.actual.type == 'END':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'IF':
+                        Parser.tokens.selectNext()
+                        resultado = IfOp("IF", lista_filhos)
+                    else:
+                        raise ValueError("erro: não fechou o if")
                 else:
-                    raise ValueError("erro: não fechou o if")
+                    raise ValueError("erro: não fechou o end do if")
+
             else:
-                raise ValueError("erro: não fechou o end do if")
- 
+                raise ValueError("erro: esqueceu o 'then'")
+
+            
 
         else:
             resultado = NoOp(0, [])
@@ -192,23 +179,20 @@ class Parser:
 
     def parserRelExpression():
         valor1 = Parser.parserExpression()
-        if Parser.tokens.actual.type == "assigment":
+        if Parser.tokens.actual.type == "assignment":
             Parser.tokens.selectNext()
             valor2 = Parser.parserExpression()
             resultado = BinOp("=", [valor1, valor2])
-            Parser.tokens.selectNext()
 
         elif Parser.tokens.actual.type == ">":
             Parser.tokens.selectNext()
             valor2 = Parser.parserExpression()
             resultado = BinOp(">", [valor1, valor2])
-            Parser.tokens.selectNext()
 
         elif Parser.tokens.actual.type == "<":
             Parser.tokens.selectNext()
             valor2 = Parser.parserExpression()
             resultado = BinOp("<", [valor1, valor2])
-            Parser.tokens.selectNext()
 
         else:
             raise ValueError("erro: expressão não identificada")
@@ -417,8 +401,8 @@ class WhileOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st):
-            return self.children[1].Evaluate(st)
+        while self.children[0].Evaluate(st):
+            self.children[1].Evaluate(st)
 
 class InputOp(Node):
     def __init__(self, valor, filho):
@@ -426,7 +410,7 @@ class InputOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        return input("")
+        return int(input(""))
 
 class IfOp(Node):
     def __init__(self, valor, filho):
