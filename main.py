@@ -1,8 +1,8 @@
 import re
 import sys
 
-reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT"]
-PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT = reserved
+reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "MAIN", "SUB", "DIM", "AS", "INTERGER", "BOOLEAN"]
+PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, MAIN, SUB, DIM, AS, INTERGER, BOOLEAN = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -112,13 +112,46 @@ class Tokenizer:
 
 class Parser:
 
-    def parserStatements():
-        lista_resultado = [Parser.parserStatement()]
-        while Parser.tokens.actual.type == 'lb':
+    def parserProgram():
+        if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
-            lista_resultado.append(Parser.parserStatement())
+            if Parser.tokens.actual.type == 'MAIN':
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == '(':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == ')':
+                        Parser.tokens.selectNext()
+                        if Parser.tokens.actual.type == 'lb':
+                            Parser.tokens.selectNext()
+
+                            lista_resultado = []
+                            while Parser.tokens.actual.type != 'END':
+                                lista_resultado.append(Parser.parserStatement())
+                                if Parser.tokens.actual.type == 'lb':
+                                Parser.tokens.selectNext()
+
+                            Parser.tokens.selectNext()
+
+                            if Parser.tokens.actual.type == 'sub':
+                                Parser.tokens.selectNext()
+                                return StatementsOp("statement", lista_resultado)
+                            
+                            else:
+                                raise ValueError("erro program: não fechou sub")
+
+                        else:
+                            raise ValueError("erro program: não pilou linha")
             
-        return StatementsOp("statement", lista_resultado)
+                    else:
+                        raise ValueError("erro program: não fechou parênteses")
+        
+                else:
+                    raise ValueError("erro program: não abriu parênteses")
+    
+            else:
+                raise ValueError("erro program: não abriu main")
+        else:
+            raise ValueError("erro program: não abriu sub")
               
 
     def parserStatement():
@@ -128,20 +161,34 @@ class Parser:
             if Parser.tokens.actual.type == 'assignment':
                 sinal = Parser.tokens.actual.value 
                 Parser.tokens.selectNext()
-                resultado = AssignmentOp(sinal, [variavel, Parser.parserExpression()])    
+                resultado = AssignmentOp(sinal, [variavel, Parser.parserRelExpression()])    
             else:
                 raise ValueError("erro: sem sinal de receber(=)")
         elif Parser.tokens.actual.type == 'PRINT':
             Parser.tokens.selectNext()
-            resultado = PrintOp("PRINT", [Parser.parserExpression()])
+            resultado = PrintOp("PRINT", [Parser.parserRelExpression()])
 
         elif Parser.tokens.actual.type == 'WHILE':
             Parser.tokens.selectNext()
-            filho1 = Parser.parserRelExpression()
-            filho2 = Parser.parserStatements()
+            filhos = [Parser.parserRelExpression()]
+
+            if Parser.tokens.actual.type == 'lb':
+                Parser.tokens.selectNext()
+
+                while Parser.tokens.actual.type != 'WEND':
+                    filhos.append(Parser.parserStatement())
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'lb':
+                        Parser.tokens.selectNext()
+                    else:
+                        raise ValueError("erro: não pulou linha")
+
+            else:
+                raise ValueError("erro: não pulou linha")
 
             if Parser.tokens.actual.type == 'WEND':
-                resultado = WhileOp("while",[filho1, filho2])
+                Parser.tokens.selectNext()
+                resultado = WhileOp("while", filhos)
             else:
                 raise ValueError("erro: não fechou o while")
 
@@ -151,11 +198,29 @@ class Parser:
             lista_filhos.append(Parser.parserRelExpression())
             if Parser.tokens.actual.type == 'THEN':
                 Parser.tokens.selectNext()
-                lista_filhos.append(Parser.parserStatements())
+                lista_if = []
+                while Parser.tokens.actual.type != 'ELSE' or Parser.tokens.actual.type != 'END':
+                    lista_if.append(Parser.parserStatement())
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'lb':
+                        Parser.tokens.selectNext()
+                    else:
+                        raise ValueError("erro: não pulou linha")
+
+                lista_filhos.append(lista_if)
 
                 if Parser.tokens.actual.type == 'ELSE':
                     Parser.tokens.selectNext()
-                    lista_filhos.append(Parser.parserStatements())
+                    lista_else = []
+                    while Parser.tokens.actual.type != 'END':
+                        lista_else.append(Parser.parserStatement())
+                        Parser.tokens.selectNext()
+                        if Parser.tokens.actual.type == 'lb':
+                            Parser.tokens.selectNext()
+                        else:
+                            raise ValueError("erro: não pulou linha")
+                
+                lista_filhos.append(lista_else)
 
                 if Parser.tokens.actual.type == 'END':
                     Parser.tokens.selectNext()
