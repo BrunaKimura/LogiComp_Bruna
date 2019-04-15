@@ -164,6 +164,27 @@ class Parser:
             else:
                 raise ValueError("erro: não fechou o while")
 
+        elif Parser.tokens.actual.type == 'IF':
+            lista_filhos = []
+            Parser.tokens.selectNext()
+            lista_filhos.append(Parser.parserRelExpression()) 
+            Parser.tokens.selectNext()
+            lista_filhos.append(Parser.parserStatements())
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'ELSE':
+                Parser.tokens.selectNext()
+                lista_filhos.append(Parser.parserStatements())
+            
+            if Parser.tokens.actual.type == 'END':
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == 'IF':
+                    resultado = IfOp("IF", lista_filhos)
+                else:
+                    raise ValueError("erro: não fechou o if")
+            else:
+                raise ValueError("erro: não fechou o end do if")
+ 
+
         else:
             resultado = NoOp(0, [])
 
@@ -397,7 +418,7 @@ class WhileOp(Node):
 
     def Evaluate(self, st):
         if self.children[0].Evaluate(st):
-            self.children[1].Evaluate(st)
+            return self.children[1].Evaluate(st)
 
 class InputOp(Node):
     def __init__(self, valor, filho):
@@ -406,6 +427,21 @@ class InputOp(Node):
 
     def Evaluate(self, st):
         return input("")
+
+class IfOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        if self.children[0].Evaluate(st):
+            return self.children[1].Evaluate(st)
+        else:
+            if len(self.children) == 3:
+                return self.children[2].Evaluate(st)
+            else:
+                pass
+
 
 #Dicionario de variaveis
 class SymbolTable:
