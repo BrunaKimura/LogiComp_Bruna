@@ -93,7 +93,7 @@ class Tokenizer:
 
                 new_word = word.upper()
                 
-                if word in reserved:
+                if new_word in reserved:
                     new_token = Token(new_word, new_word)
                     self.actual = new_token
                 else: 
@@ -152,9 +152,6 @@ class Parser:
         elif Parser.tokens.actual.type == 'PRINT':
             Parser.tokens.selectNext()
             resultado = PrintOp("PRINT", [Parser.parserExpression()])
-        elif Parser.tokens.actual.type == 'BEGIN':
-            resultado = Parser.parserStatements()
-            Parser.tokens.selectNext()
 
         elif Parser.tokens.actual.type == 'WHILE':
             Parser.tokens.selectNext()
@@ -263,6 +260,11 @@ class Parser:
             Parser.tokens.selectNext()
             children = [Parser.parserFactor()]
             resultado = UnOp('-', children)
+
+        elif Parser.tokens.actual.type == 'NOT':
+            Parser.tokens.selectNext()
+            children = [Parser.parserFactor()]
+            resultado = UnOp('not', children)
             
         elif Parser.tokens.actual.type == 'identifier':
             resultado = IdentifierOp(Parser.tokens.actual.value, [])
@@ -314,6 +316,16 @@ class BinOp(Node):
             return self.children[0].Evaluate(st) * self.children[1].Evaluate(st)
         elif self.value == '/':
             return self.children[0].Evaluate(st) // self.children[1].Evaluate(st)
+        elif self.value == '=':
+            return self.children[0].Evaluate(st) == self.children[1].Evaluate(st)
+        elif self.value == '>':
+            return self.children[0].Evaluate(st) > self.children[1].Evaluate(st)
+        elif self.value == '<':
+            return self.children[0].Evaluate(st) < self.children[1].Evaluate(st)
+        elif self.value == 'OR':
+            return self.children[0].Evaluate(st) or self.children[1].Evaluate(st)
+        elif self.value == 'AND':
+            return self.children[0].Evaluate(st) and self.children[1].Evaluate(st)
 
 class UnOp(Node):
     def __init__(self, valor, filho):
@@ -323,8 +335,10 @@ class UnOp(Node):
     def Evaluate(self, st):
         if self.value == '-':
             return -self.children[0].Evaluate(st)
-        else:
+        elif self.value == '+':
             return self.children[0].Evaluate(st)
+        else:
+            return not(self.children[0].Evaluate(st))
 
 class IntVal(Node):
     def __init__(self, valor, filho):
@@ -376,6 +390,22 @@ class StatementsOp(Node):
         for f in self.children:
             f.Evaluate(st)
 
+class WhileOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        if self.children[0].Evaluate(st):
+            self.children[1].Evaluate(st)
+
+class InputOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        return input("")
 
 #Dicionario de variaveis
 class SymbolTable:
@@ -400,10 +430,12 @@ class PrePro:
 
 st = SymbolTable()
 
-if len(sys.argv) == 1:
-    raise ValueError("erro: arquivo de entrada não inserido ")
-script = sys.argv[0]
-filename = sys.argv[1]
+# if len(sys.argv) == 1:
+#     raise ValueError("erro: arquivo de entrada não inserido ")
+# script = sys.argv[0]
+# filename = sys.argv[1]
+
+filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
