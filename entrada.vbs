@@ -8,15 +8,17 @@ Sub Main()
     c = i and b
     print not c
 
-    ba = 2
+    ba = input
+'    print 3456
     if ba>3 then
-        print ba
+        print i
     else
-        print 4+ba
+        print b
     end if
 
     while ba < 10
         print ba
         ba = ba+1
     wend
+    print ba
 End Sub
