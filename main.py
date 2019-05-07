@@ -123,6 +123,7 @@ class Parser:
         if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
             if Parser.tokens.actual.type == 'MAIN':
+                VarDec("VarDec", [MAIN, (MAIN, "")])
                 Parser.tokens.selectNext()
                 if Parser.tokens.actual.type == '(':
                     Parser.tokens.selectNext()
