@@ -1,8 +1,8 @@
 import re
 import sys
 
-reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "MAIN", "SUB", "DIM", "AS", "INTERGER", "BOOLEAN"]
-PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, MAIN, SUB, DIM, AS, INTERGER, BOOLEAN = reserved
+reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "MAIN", "SUB", "DIM", "AS", "INTEGER", "BOOLEAN", "TRUE", "FALSE"]
+PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, MAIN, SUB, DIM, AS, INTEGER, BOOLEAN, TRUE, FALSE = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -94,8 +94,15 @@ class Tokenizer:
                 new_word = word.upper()
                 
                 if new_word in reserved:
-                    new_token = Token(new_word, new_word)
-                    self.actual = new_token
+                    if new_word == INTEGER or new_word == BOOLEAN:
+                        new_token = Token("type", new_word)
+                        self.actual = new_token
+                    elif new_word == TRUE or new_word == FALSE:
+                        new_token = Token("bool", new_word)
+                        self.actual = new_token
+                    else:
+                        new_token = Token(new_word, new_word)
+                        self.actual = new_token
                 else: 
                     new_token = Token("identifier", new_word)
                     self.actual = new_token
@@ -128,11 +135,11 @@ class Parser:
                             while Parser.tokens.actual.type != 'END':
                                 lista_resultado.append(Parser.parserStatement())
                                 if Parser.tokens.actual.type == 'lb':
-                                Parser.tokens.selectNext()
+                                    Parser.tokens.selectNext()
 
                             Parser.tokens.selectNext()
 
-                            if Parser.tokens.actual.type == 'sub':
+                            if Parser.tokens.actual.type == 'SUB':
                                 Parser.tokens.selectNext()
                                 return StatementsOp("statement", lista_resultado)
                             
@@ -171,13 +178,14 @@ class Parser:
         elif Parser.tokens.actual.type == 'WHILE':
             Parser.tokens.selectNext()
             filhos = [Parser.parserRelExpression()]
+            condicao = []
 
             if Parser.tokens.actual.type == 'lb':
                 Parser.tokens.selectNext()
 
                 while Parser.tokens.actual.type != 'WEND':
-                    filhos.append(Parser.parserStatement())
-                    Parser.tokens.selectNext()
+                    condicao.append(Parser.parserStatement())
+                    # Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'lb':
                         Parser.tokens.selectNext()
                     else:
@@ -187,6 +195,7 @@ class Parser:
                 raise ValueError("erro: não pulou linha")
 
             if Parser.tokens.actual.type == 'WEND':
+                filhos.append(condicao)
                 Parser.tokens.selectNext()
                 resultado = WhileOp("while", filhos)
             else:
@@ -199,29 +208,26 @@ class Parser:
             if Parser.tokens.actual.type == 'THEN':
                 Parser.tokens.selectNext()
                 lista_if = []
-                while Parser.tokens.actual.type != 'ELSE' or Parser.tokens.actual.type != 'END':
-                    lista_if.append(Parser.parserStatement())
-                    Parser.tokens.selectNext()
-                    if Parser.tokens.actual.type == 'lb':
+                lista_else = []
+                if Parser.tokens.actual.type == 'lb':
                         Parser.tokens.selectNext()
-                    else:
-                        raise ValueError("erro: não pulou linha")
-
-                lista_filhos.append(lista_if)
-
-                if Parser.tokens.actual.type == 'ELSE':
-                    Parser.tokens.selectNext()
-                    lista_else = []
-                    while Parser.tokens.actual.type != 'END':
-                        lista_else.append(Parser.parserStatement())
-                        Parser.tokens.selectNext()
-                        if Parser.tokens.actual.type == 'lb':
+                while Parser.tokens.actual.type != 'END':
+                    if Parser.tokens.actual.type == 'ELSE':
+                        lista_filhos.append(lista_if)
+                        Parser.tokens.selectNext() 
+                        while Parser.tokens.actual.type != 'END':
+                            if Parser.tokens.actual.type == 'lb':
+                                Parser.tokens.selectNext()
+                            else:
+                                raise ValueError("erro: não pulou linha")
+                            lista_else.append(Parser.parserStatement())
                             Parser.tokens.selectNext()
-                        else:
-                            raise ValueError("erro: não pulou linha")
-                
-                lista_filhos.append(lista_else)
-
+                            
+                        lista_filhos.append(lista_else)
+                    else:
+                        lista_if.append(Parser.parserStatement())
+                        Parser.tokens.selectNext()
+            
                 if Parser.tokens.actual.type == 'END':
                     Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'IF':
@@ -235,8 +241,16 @@ class Parser:
             else:
                 raise ValueError("erro: esqueceu o 'then'")
 
-            
-
+        elif Parser.tokens.actual.type == 'DIM':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'identifier':
+                variavel = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == 'AS':
+                    Parser.tokens.selectNext()
+                    if Parser.tokens.actual.type == 'type':
+                        resultado = VarDec("VarDec", [variavel, Parser.parserType()])
+                        Parser.tokens.selectNext()
         else:
             resultado = NoOp(0, [])
 
@@ -260,7 +274,7 @@ class Parser:
             resultado = BinOp("<", [valor1, valor2])
 
         else:
-            raise ValueError("erro: expressão não identificada")
+            resultado = valor1
 
         return resultado
 
@@ -280,7 +294,7 @@ class Parser:
             if Parser.tokens.actual.type == 'OR':
                 Parser.tokens.selectNext()
                 children = [resultado, Parser.parserTerm()]
-                resultado = BinOp('or', children)
+                resultado = BinOp('OR', children)
             
         return resultado
 
@@ -301,7 +315,7 @@ class Parser:
             if Parser.tokens.actual.type == 'AND':
                 Parser.tokens.selectNext()
                 children = [resultado, Parser.parserFactor()]
-                resultado = BinOp('and', children)
+                resultado = BinOp('AND', children)
             
         return resultado
 
@@ -309,6 +323,10 @@ class Parser:
     def parserFactor():
         if Parser.tokens.actual.type == 'int':
             resultado = IntVal(Parser.tokens.actual.value, [])
+            Parser.tokens.selectNext()
+
+        elif Parser.tokens.actual.type == 'bool':
+            resultado = BoolVal(Parser.tokens.actual.value, [])
             Parser.tokens.selectNext()
 
         elif Parser.tokens.actual.type == '(':
@@ -334,7 +352,7 @@ class Parser:
         elif Parser.tokens.actual.type == 'NOT':
             Parser.tokens.selectNext()
             children = [Parser.parserFactor()]
-            resultado = UnOp('not', children)
+            resultado = UnOp('NOT', children)
             
         elif Parser.tokens.actual.type == 'identifier':
             resultado = IdentifierOp(Parser.tokens.actual.value, [])
@@ -349,12 +367,14 @@ class Parser:
 
         return resultado
 
+    def parserType():
+        return TypeOp(Parser.tokens.actual.value,[])
 
     def run(code):
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
-        a = Parser.parserStatements()
-        Parser.tokens.selectNext()
+        a = Parser.parserProgram()
+        # Parser.tokens.selectNext()
         while Parser.tokens.actual.type == 'lb':
             Parser.tokens.selectNext()
         if Parser.tokens.actual.type == "eof":
@@ -379,23 +399,23 @@ class BinOp(Node):
 
     def Evaluate(self, st):
         if self.value == '+':
-            return self.children[0].Evaluate(st) + self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] + self.children[1].Evaluate(st)[0], INTEGER)
         elif self.value == '-':
-            return self.children[0].Evaluate(st) - self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] - self.children[1].Evaluate(st)[0], INTEGER)
         elif self.value == '*':
-            return self.children[0].Evaluate(st) * self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] * self.children[1].Evaluate(st)[0], INTEGER)
         elif self.value == '/':
-            return self.children[0].Evaluate(st) // self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] // self.children[1].Evaluate(st)[0], INTEGER)
         elif self.value == '=':
-            return self.children[0].Evaluate(st) == self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0], BOOLEAN)
         elif self.value == '>':
-            return self.children[0].Evaluate(st) > self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] > self.children[1].Evaluate(st)[0], BOOLEAN)
         elif self.value == '<':
-            return self.children[0].Evaluate(st) < self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] < self.children[1].Evaluate(st)[0], BOOLEAN)
         elif self.value == 'OR':
-            return self.children[0].Evaluate(st) or self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] or self.children[1].Evaluate(st)[0], BOOLEAN)
         elif self.value == 'AND':
-            return self.children[0].Evaluate(st) and self.children[1].Evaluate(st)
+            return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
 
 class UnOp(Node):
     def __init__(self, valor, filho):
@@ -404,11 +424,14 @@ class UnOp(Node):
 
     def Evaluate(self, st):
         if self.value == '-':
-            return -self.children[0].Evaluate(st)
+            return (-self.children[0].Evaluate(st), INTEGER)
         elif self.value == '+':
-            return self.children[0].Evaluate(st)
+            return (self.children[0].Evaluate(st), INTEGER)
         else:
-            return not(self.children[0].Evaluate(st))
+            if self.children[0].Evaluate(st) == TRUE:
+                return (FALSE, BOOLEAN)
+            else:
+                return (TRUE, BOOLEAN)
 
 class IntVal(Node):
     def __init__(self, valor, filho):
@@ -416,7 +439,7 @@ class IntVal(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        return self.value
+        return (self.value, INTEGER)
 
 class NoOp(Node):
     def __init__(self, valor, filho):
@@ -441,7 +464,7 @@ class PrintOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        print(self.children[0].Evaluate(st))
+        print(self.children[0].Evaluate(st)[0])
 
 class IdentifierOp(Node):
     def __init__(self, valor, filho):
@@ -466,8 +489,9 @@ class WhileOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        while self.children[0].Evaluate(st):
-            self.children[1].Evaluate(st)
+        while self.children[0].Evaluate(st)[0]:
+            for e in self.children[1]:
+                e.Evaluate(st)
 
 class InputOp(Node):
     def __init__(self, valor, filho):
@@ -475,7 +499,7 @@ class InputOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        return int(input(""))
+        return (int(input("")), INTEGER)
 
 class IfOp(Node):
     def __init__(self, valor, filho):
@@ -483,14 +507,39 @@ class IfOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st):
-            return self.children[1].Evaluate(st)
+        if self.children[0].Evaluate(st) == TRUE:
+            return self.children[1][0].Evaluate(st)
         else:
             if len(self.children) == 3:
-                return self.children[2].Evaluate(st)
+                return self.children[2][0].Evaluate(st)
             else:
                 pass
+class VarDec(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
 
+    def Evaluate(self, st):
+        if self.children[1].value == 'INTEGER':
+            st.creator(self.children[0], (0, self.children[1].value))
+        else:
+            st.creator(self.children[0], (TRUE, self.children[1].value))
+        
+class TypeOp(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        return self.value
+
+class BoolVal(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        return (self.value, BOOLEAN)
 
 #Dicionario de variaveis
 class SymbolTable:
@@ -504,9 +553,19 @@ class SymbolTable:
             raise ValueError("erro: variável inexistente")
 
     def setter(self, var, val):
-        self.dic_variavel[var] = val
+        if var in self.dic_variavel:
+            if self.dic_variavel[var][1] == val[1]:
+                self.dic_variavel[var] = val
+            else: 
+                raise ValueError("erro: tipo diferente de variável")
+        else:
+            raise ValueError("erro: variável inexistente")
 
-                
+    def creator(self, var, val):
+        if var not in self.dic_variavel:
+            self.dic_variavel[var] = val
+        else:
+            raise ValueError("erro: variável já existe")
 
 class PrePro:
 
@@ -515,12 +574,12 @@ class PrePro:
 
 st = SymbolTable()
 
-if len(sys.argv) == 1:
-    raise ValueError("erro: arquivo de entrada não inserido ")
-script = sys.argv[0]
-filename = sys.argv[1]
+# if len(sys.argv) == 1:
+#     raise ValueError("erro: arquivo de entrada não inserido ")
+# script = sys.argv[0]
+# filename = sys.argv[1]
 
-# filename = 'entrada.vbs'
+filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
