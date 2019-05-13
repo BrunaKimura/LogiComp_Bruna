@@ -336,7 +336,7 @@ class Parser:
 
         elif Parser.tokens.actual.type == '(':
             Parser.tokens.selectNext()
-            resultado = Parser.parserExpression()
+            resultado = Parser.parserRelExpression()
             if Parser.tokens.actual.type == ')':
                 Parser.tokens.selectNext()
             else:
@@ -584,7 +584,7 @@ st = SymbolTable()
 # script = sys.argv[0]
 # filename = sys.argv[1]
 
-filename = 'teste.vbs'
+filename = 'teste3.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
