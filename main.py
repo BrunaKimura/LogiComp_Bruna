@@ -98,6 +98,10 @@ class Tokenizer:
                         new_token = Token("type", new_word)
                         self.actual = new_token
                     elif new_word == TRUE or new_word == FALSE:
+                        if new_word == TRUE:
+                            new_word = True
+                        else:
+                            new_word = False
                         new_token = Token("bool", new_word)
                         self.actual = new_token
                     else:
@@ -214,7 +218,6 @@ class Parser:
                         Parser.tokens.selectNext()
                 while Parser.tokens.actual.type != 'END':
                     if Parser.tokens.actual.type == 'ELSE':
-                        # lista_filhos.append(lista_if)
                         Parser.tokens.selectNext() 
                         while Parser.tokens.actual.type != 'END':
                             if Parser.tokens.actual.type == 'lb':
@@ -223,8 +226,6 @@ class Parser:
                                 raise ValueError("erro: não pulou linha")
                             lista_else.append(Parser.parserStatement())
                             Parser.tokens.selectNext()
-                            
-                        # lista_filhos.append(lista_else)
                     else:
                         lista_if.append(Parser.parserStatement())
                         Parser.tokens.selectNext()
@@ -379,7 +380,6 @@ class Parser:
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
         a = Parser.parserProgram()
-        # Parser.tokens.selectNext()
         while Parser.tokens.actual.type == 'lb':
             Parser.tokens.selectNext()
         if Parser.tokens.actual.type == "eof":
@@ -433,10 +433,10 @@ class UnOp(Node):
         elif self.value == '+':
             return (self.children[0].Evaluate(st), INTEGER)
         else:
-            if self.children[0].Evaluate(st) == TRUE:
-                return (FALSE, BOOLEAN)
+            if self.children[0].Evaluate(st)[0] == True:
+                return (False, BOOLEAN)
             else:
-                return (TRUE, BOOLEAN)
+                return (True, BOOLEAN)
 
 class IntVal(Node):
     def __init__(self, valor, filho):
@@ -584,7 +584,7 @@ st = SymbolTable()
 # script = sys.argv[0]
 # filename = sys.argv[1]
 
-filename = 'teste3.vbs'
+filename = 'teste5.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
