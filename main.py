@@ -511,11 +511,13 @@ class IfOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st)[0] == TRUE:
-            return self.children[1][0].Evaluate(st)
+        if self.children[0].Evaluate(st)[0] == True:
+            for e in self.children[1]:
+                e.Evaluate(st)
         else:
             if len(self.children) == 3:
-                return self.children[2][0].Evaluate(st)
+                for e in self.children[2]:
+                    e.Evaluate(st)
             else:
                 pass
 class VarDec(Node):
@@ -527,7 +529,7 @@ class VarDec(Node):
         if self.children[1].value == 'INTEGER':
             st.creator(self.children[0], (0, self.children[1].value))
         else:
-            st.creator(self.children[0], (TRUE, self.children[1].value))
+            st.creator(self.children[0], (True, self.children[1].value))
         
 class TypeOp(Node):
     def __init__(self, valor, filho):
@@ -583,7 +585,7 @@ if len(sys.argv) == 1:
 script = sys.argv[0]
 filename = sys.argv[1]
 
-# filename = 'entrada.vbs'
+# filename = 'teste1.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"

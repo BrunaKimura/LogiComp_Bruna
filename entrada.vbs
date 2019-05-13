@@ -1,24 +1,42 @@
-Sub Main()
-    DIM ba as integer
-    Dim i as boolean
-    Dim b as boolean
-    Dim c as boolean
-    i = True
-    b = False
-    c = i and b
-    print not c
+Sub main()
+    ' adaptado da sabrina
 
-    ba = input
-'    print 3456
-    if ba>3 then
-        print i
-    else
-        print b
-    end if
+    dim fizz as integer
+    dim buzz as integer
+    dim fizzbuzz as integer
+    dim n as integer
+    dim tres as integer
+    dim cinco as integer
+    dim flag as boolean
 
-    while ba < 10
-        print ba
-        ba = ba+1
+    n = 15
+    fizz = 999
+    buzz = 111
+    fizzbuzz = 999111
+    flag = True
+
+    while n > 0
+        tres = (n - (n / 3 * 3))
+        cinco = (n - (n / 5 * 5))
+
+        print n
+
+        if (tres = 0) and (cinco = 0) then
+            print fizzbuzz
+            flag = False
+        end if
+
+        if (tres = 0) and (flag = True) then
+            print fizz
+            flag = False
+        end if
+
+        if (cinco = 0) and (flag = True) then
+            print buzz
+            flag = False
+        end if
+
+        flag = True
+        n = n - 1
     wend
-    print ba
-End Sub
+end sub
