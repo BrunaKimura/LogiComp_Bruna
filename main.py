@@ -214,7 +214,7 @@ class Parser:
                         Parser.tokens.selectNext()
                 while Parser.tokens.actual.type != 'END':
                     if Parser.tokens.actual.type == 'ELSE':
-                        lista_filhos.append(lista_if)
+                        # lista_filhos.append(lista_if)
                         Parser.tokens.selectNext() 
                         while Parser.tokens.actual.type != 'END':
                             if Parser.tokens.actual.type == 'lb':
@@ -224,11 +224,15 @@ class Parser:
                             lista_else.append(Parser.parserStatement())
                             Parser.tokens.selectNext()
                             
-                        lista_filhos.append(lista_else)
+                        # lista_filhos.append(lista_else)
                     else:
                         lista_if.append(Parser.parserStatement())
                         Parser.tokens.selectNext()
-            
+                        
+                lista_filhos.append(lista_if)
+                if len(lista_else)>1:
+                    lista_filhos.append(lista_else)
+
                 if Parser.tokens.actual.type == 'END':
                     Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'IF':
@@ -508,7 +512,7 @@ class IfOp(Node):
         self.children = filho
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st) == TRUE:
+        if self.children[0].Evaluate(st)[0] == TRUE:
             return self.children[1][0].Evaluate(st)
         else:
             if len(self.children) == 3:
@@ -575,12 +579,12 @@ class PrePro:
 
 st = SymbolTable()
 
-if len(sys.argv) == 1:
-    raise ValueError("erro: arquivo de entrada não inserido ")
-script = sys.argv[0]
-filename = sys.argv[1]
+# if len(sys.argv) == 1:
+#     raise ValueError("erro: arquivo de entrada não inserido ")
+# script = sys.argv[0]
+# filename = sys.argv[1]
 
-# filename = 'entrada.vbs'
+filename = 'teste.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
