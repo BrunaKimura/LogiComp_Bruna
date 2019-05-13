@@ -190,7 +190,6 @@ class Parser:
 
                 while Parser.tokens.actual.type != 'WEND':
                     condicao.append(Parser.parserStatement())
-                    # Parser.tokens.selectNext()
                     if Parser.tokens.actual.type == 'lb':
                         Parser.tokens.selectNext()
                     else:
@@ -579,12 +578,12 @@ class PrePro:
 
 st = SymbolTable()
 
-# if len(sys.argv) == 1:
-#     raise ValueError("erro: arquivo de entrada não inserido ")
-# script = sys.argv[0]
-# filename = sys.argv[1]
+if len(sys.argv) == 1:
+    raise ValueError("erro: arquivo de entrada não inserido ")
+script = sys.argv[0]
+filename = sys.argv[1]
 
-filename = 'teste5.vbs'
+# filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
