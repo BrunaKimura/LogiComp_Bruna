@@ -526,14 +526,18 @@ class UnOp(Node):
 
     def Evaluate(self, st):
         if self.value == '-':
-            return (-self.children[0].Evaluate(st), INTEGER)
+            # return (-self.children[0].Evaluate(st), INTEGER)
+            BinOp("*", [self.children[0].Evaluate(st), -1])
         elif self.value == '+':
-            return (self.children[0].Evaluate(st), INTEGER)
+            # return (self.children[0].Evaluate(st), INTEGER)
+            BinOp("*", [self.children[0].Evaluate(st), 1])
         else:
-            if self.children[0].Evaluate(st)[0] == True:
-                return (False, BOOLEAN)
-            else:
-                return (True, BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("NOT EBX")
+            # if self.children[0].Evaluate(st)[0] == True:
+            #     return (False, BOOLEAN)
+            # else:
+            #     return (True, BOOLEAN)
 
 class IntVal(Node):
     def __init__(self, valor, filho):
