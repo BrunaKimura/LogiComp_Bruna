@@ -14,6 +14,8 @@ class CodeGen():
     @staticmethod
     def flush():
         pass
+        with open (output, 'w') as file:
+            outfile = file.write() + "\n"
         #Abre o arquivo de saida para escrita
         # escreve os pre-comandos
         # escreve os comandos da lista
@@ -505,13 +507,15 @@ class BinOp(Node):
             CodeGen.write("MOV EBX, EAX")
 
         elif self.value == 'AND':
-            # return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
+
             self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("AND EBX, EAX")
             CodeGen.write("MOV EBX, EAX")
+
+            # return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
 
 
 class UnOp(Node):
@@ -601,9 +605,19 @@ class WhileOp(Node):
         self.id = Node.newID()
 
     def Evaluate(self, st):
-        while self.children[0].Evaluate(st)[0]:
-            for e in self.children[1]:
-                e.Evaluate(st)
+        CodeGen.write("LOOP_{0}:".format(self.id))
+
+        self.children[0].Evaluate(st)[0]
+
+        CodeGen.write("CMP EBX, False")
+        
+        CodeGen.write("JE EXIT_{0}".format(self.id))
+
+        for e in self.children[1]:
+            e.Evaluate(st)
+
+        CodeGen.write("JMP_LOOP_{0}".format(self.id))
+        CodeGen.write("EXIT_{0}:".format(self.id))
 
 class InputOp(Node):
     def __init__(self, valor, filho):
@@ -621,15 +635,29 @@ class IfOp(Node):
         self.id = Node.newID()
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st)[0] == True:
+        self.children[0].Evaluate(st)
+        CodeGen.write("CMP EBX, False")
+
+        if len(self.children) == 3:
+            CodeGen.write("JE ELSE_{0}".format(self.id))
+
             for e in self.children[1]:
                 e.Evaluate(st)
+
+            CodeGen.write("JMP EXIT_{0}".format(self.id))
+            CodeGen.write("ELSE_{0}:".format(self.id))
+
+            for e in self.children[2]:
+                e.Evaluate(st)
+
         else:
-            if len(self.children) == 3:
-                for e in self.children[2]:
-                    e.Evaluate(st)
-            else:
-                pass
+            CodeGen.write("JE EXIT_{0}".format(self.id))
+
+            for e in self.children[1]:
+                e.Evaluate(st)
+        
+        CodeGen.write("EXIT_{0}".format(self.id))
+
 class VarDec(Node):
     def __init__(self, valor, filho):
         self.value = valor
@@ -710,8 +738,6 @@ output = sys.argv[2]
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
 
-with open (output, 'w') as file:
-    saida = file.write() + "\n"
 
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
