@@ -139,6 +139,7 @@ class Tokenizer:
 
 class Parser:
 
+    @staticmethod
     def parserProgram():
         if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
@@ -181,7 +182,7 @@ class Parser:
         else:
             raise ValueError("erro program: não abriu sub")
               
-
+    @staticmethod
     def parserStatement():
         if Parser.tokens.actual.type == 'identifier':
             variavel = Parser.tokens.actual.value
@@ -277,6 +278,7 @@ class Parser:
 
         return resultado
 
+    @staticmethod
     def parserRelExpression():
         valor1 = Parser.parserExpression()
         if Parser.tokens.actual.type == "assignment":
@@ -299,6 +301,7 @@ class Parser:
 
         return resultado
 
+    @staticmethod
     def parserExpression():
         resultado = Parser.parserTerm()
         while Parser.tokens.actual.type == 'plus' or Parser.tokens.actual.type == 'minus' or Parser.tokens.actual.type == 'OR':
@@ -319,7 +322,7 @@ class Parser:
             
         return resultado
 
-
+    @staticmethod
     def parserTerm():
         resultado = Parser.parserFactor()
         while Parser.tokens.actual.type == 'mult' or Parser.tokens.actual.type == 'div' or Parser.tokens.actual.type == 'AND':
@@ -340,7 +343,7 @@ class Parser:
             
         return resultado
 
-
+    @staticmethod
     def parserFactor():
         if Parser.tokens.actual.type == 'int':
             resultado = IntVal(Parser.tokens.actual.value, [])
@@ -388,9 +391,11 @@ class Parser:
 
         return resultado
 
+    @staticmethod
     def parserType():
         return TypeOp(Parser.tokens.actual.value,[])
 
+    @staticmethod
     def run(code):
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
@@ -688,6 +693,7 @@ class SymbolTable:
 
 class PrePro:
 
+    @staticmethod
     def filter_t(code):
         return re.sub("'.*\n", "" , code, count=0, flags=0)
 
