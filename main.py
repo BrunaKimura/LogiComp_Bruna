@@ -4,6 +4,22 @@ import sys
 reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "MAIN", "SUB", "DIM", "AS", "INTEGER", "BOOLEAN", "TRUE", "FALSE"]
 PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, MAIN, SUB, DIM, AS, INTEGER, BOOLEAN, TRUE, FALSE = reserved
 
+class CodeGen():
+    lista = []
+
+    @staticmethod
+    def write(comando):
+        CodeGen.lista.append(comando)
+
+    @staticmethod
+    def flush():
+        pass
+        #Abre o arquivo de saida para escrita
+        # escreve os pre-comandos
+        # escreve os comandos da lista
+        # escreve os pos-comandos
+
+
 class Token:
     def __init__(self, t, v):
         self.type = t
@@ -389,42 +405,115 @@ class Parser:
 
 #nós e operadores
 class Node:
+    i = 0
     def __init__(self):
         self.value = None
         self.children = []
+        self.id = Node.newID()
+        
 
     def Evaluate(self, st):
         pass
+
+    @staticmethod
+    def newID():
+        Node.i += 1
+        return Node.i
 
 class BinOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         if self.value == '+':
-            return (self.children[0].Evaluate(st)[0] + self.children[1].Evaluate(st)[0], INTEGER)
+            # return (self.children[0].Evaluate(st)[0] + self.children[1].Evaluate(st)[0], INTEGER)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("ADD EAX, EBX")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == '-':
-            return (self.children[0].Evaluate(st)[0] - self.children[1].Evaluate(st)[0], INTEGER)
+            # return (self.children[0].Evaluate(st)[0] - self.children[1].Evaluate(st)[0], INTEGER)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("SUB EAX, EBX")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == '*':
-            return (self.children[0].Evaluate(st)[0] * self.children[1].Evaluate(st)[0], INTEGER)
+            # return (self.children[0].Evaluate(st)[0] * self.children[1].Evaluate(st)[0], INTEGER)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("IMUL EAX, EBX")
+            CodeGen.write("MOV EBX, EAX")
+        
         elif self.value == '/':
-            return (self.children[0].Evaluate(st)[0] // self.children[1].Evaluate(st)[0], INTEGER)
+            # return (self.children[0].Evaluate(st)[0] // self.children[1].Evaluate(st)[0], INTEGER)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("IDIV EAX, EBX")
+            CodeGen.write("MOV EBX, EAX")
+        
         elif self.value == '=':
-            return (self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0], BOOLEAN)
+            # return (self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0], BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("CALL binop_je")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == '>':
-            return (self.children[0].Evaluate(st)[0] > self.children[1].Evaluate(st)[0], BOOLEAN)
+            # return (self.children[0].Evaluate(st)[0] > self.children[1].Evaluate(st)[0], BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("CALL binop_jg")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == '<':
-            return (self.children[0].Evaluate(st)[0] < self.children[1].Evaluate(st)[0], BOOLEAN)
+            # return (self.children[0].Evaluate(st)[0] < self.children[1].Evaluate(st)[0], BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("CALL binop_jl")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == 'OR':
-            return (self.children[0].Evaluate(st)[0] or self.children[1].Evaluate(st)[0], BOOLEAN)
+            # return (self.children[0].Evaluate(st)[0] or self.children[1].Evaluate(st)[0], BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("OR EBX, EAX")
+            CodeGen.write("MOV EBX, EAX")
+
         elif self.value == 'AND':
-            return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
+            # return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
+            self.children[0].Evaluate(st)
+            CodeGen.write("PUSH EBX")
+            self.children[1].Evaluate(st)
+            CodeGen.write("POP EAX")
+            CodeGen.write("AND EBX, EAX")
+            CodeGen.write("MOV EBX, EAX")
+
 
 class UnOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         if self.value == '-':
@@ -441,14 +530,17 @@ class IntVal(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
-        return (self.value, INTEGER)
+        CodeGen.write("MOV EBX, {0}".format (self.value))
+        # return (self.value, INTEGER)
 
 class NoOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         pass
@@ -458,22 +550,31 @@ class AssignmentOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
-        return st.setter(self.children[0], self.children[1].Evaluate(st))
+        st.setter(self.children[0], self.children[1].Evaluate(st))
+        CodeGen.write("MOV [EBP-{0}], EBX".format(st.getter(self.children[0])))
+
 
 class PrintOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
-        print(self.children[0].Evaluate(st)[0])
+        # print(self.children[0].Evaluate(st)[0])
+        self.children[0].Evaluate(st)
+        CodeGen.write("PUSH EBX")
+        CodeGen.write("CALL print")
+        CodeGen.write("POP EBX")
 
 class IdentifierOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         return st.getter(self.value)
@@ -482,6 +583,7 @@ class StatementsOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         for f in self.children:
@@ -491,6 +593,7 @@ class WhileOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         while self.children[0].Evaluate(st)[0]:
@@ -501,6 +604,7 @@ class InputOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         return (int(input("")), INTEGER)
@@ -509,6 +613,7 @@ class IfOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         if self.children[0].Evaluate(st)[0] == True:
@@ -524,6 +629,7 @@ class VarDec(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
         if self.children[1].value == 'INTEGER':
@@ -531,11 +637,14 @@ class VarDec(Node):
         else:
             st.creator(self.children[0], (True, self.children[1].value))
         
+        CodeGen.write("PUSH DWORD 0")
+        
 class TypeOp(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
-
+        self.id = Node.newID()
+ 
     def Evaluate(self, st):
         return self.value
 
@@ -543,14 +652,17 @@ class BoolVal(Node):
     def __init__(self, valor, filho):
         self.value = valor
         self.children = filho
+        self.id = Node.newID()
 
     def Evaluate(self, st):
-        return (self.value, BOOLEAN)
+        # return (self.value, BOOLEAN)
+        CodeGen.write("MOV EBX, {0}".format (self.value))
 
 #Dicionario de variaveis
 class SymbolTable:
     def __init__(self):
         self.dic_variavel = {}
+        self.contador = 0
 
     def getter(self, var):
         if var in self.dic_variavel:
@@ -568,8 +680,9 @@ class SymbolTable:
             raise ValueError("erro: variável inexistente")
 
     def creator(self, var, val):
+        self.contador+=4
         if var not in self.dic_variavel:
-            self.dic_variavel[var] = val
+            self.dic_variavel[var] = val+[self.contador]
         else:
             raise ValueError("erro: variável já existe")
 
@@ -584,11 +697,15 @@ if len(sys.argv) == 1:
     raise ValueError("erro: arquivo de entrada não inserido ")
 script = sys.argv[0]
 filename = sys.argv[1]
+output = sys.argv[2]
 
 # filename = 'teste1.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
+
+with open (output, 'w') as file:
+    saida = file.write() + "\n"
 
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
