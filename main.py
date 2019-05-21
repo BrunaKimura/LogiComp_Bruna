@@ -13,14 +13,19 @@ class CodeGen():
 
     @staticmethod
     def flush():
-        with open ("output.txt", 'w') as file:
-            for linha in CodeGen.lista:
-                file.write(linha + "\n") 
+        with open ('pre.asm', 'r') as file_pre:
+            pre = file_pre.read() + "\n"
+        with open ('pos.asm', 'r') as file_pos:
+            pos = file_pos.read() + "\n"
 
-        #Abre o arquivo de saida para escrita
-        # escreve os pre-comandos
-        # escreve os comandos da lista
-        # escreve os pos-comandos
+
+        with open ("output.asm", 'w') as file_out:
+            file_out.write(pre)
+            file_out.write('; codigo gerado pelo compilador\n\n')
+            for linha in CodeGen.lista:
+                file_out.write(linha + "\n") 
+            file_out.write('\n')
+            file_out.write(pos)
 
 
 class Token:
@@ -436,85 +441,135 @@ class BinOp(Node):
 
     def Evaluate(self, st):
         if self.value == '+':
-            # return (self.children[0].Evaluate(st)[0] + self.children[1].Evaluate(st)[0], INTEGER)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("ADD EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
+            if type(b) == list:
+                c = a+b[0]
+            else:
+                c = a+b
+            return(c)
 
         elif self.value == '-':
             # return (self.children[0].Evaluate(st)[0] - self.children[1].Evaluate(st)[0], INTEGER)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("SUB EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
 
+            if type(b) == list:
+                c = a-b[0]
+            else:
+                c = a-b
+            return(c)
+
         elif self.value == '*':
             # return (self.children[0].Evaluate(st)[0] * self.children[1].Evaluate(st)[0], INTEGER)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
-            CodeGen.write("IMUL EAX, EBX")
+            CodeGen.write("IMUL EBX")
             CodeGen.write("MOV EBX, EAX")
+
+            if type(b) == list:
+                c = a*b[0]
+            else:
+                c = a*b
+            return(c)
         
         elif self.value == '/':
             # return (self.children[0].Evaluate(st)[0] // self.children[1].Evaluate(st)[0], INTEGER)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("IDIV EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
+
+            if type(b) == list:
+                c = a // b[0]
+            else:
+                c = a // b
+            return(c)
         
         elif self.value == '=':
             # return (self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0], BOOLEAN)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
+            CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_je")
-            CodeGen.write("MOV EBX, EAX")
+            
+            if type(b) == list:
+                c = (a == b[0])
+            else:
+                c = (a == b)
+            return(c)
 
         elif self.value == '>':
             # return (self.children[0].Evaluate(st)[0] > self.children[1].Evaluate(st)[0], BOOLEAN)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
+            CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_jg")
-            CodeGen.write("MOV EBX, EAX")
+            
+            if type(b) == list:
+                c = a>b[0]
+            else:
+                c = a>b
+            return(c)
 
         elif self.value == '<':
             # return (self.children[0].Evaluate(st)[0] < self.children[1].Evaluate(st)[0], BOOLEAN)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
+            CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_jl")
-            CodeGen.write("MOV EBX, EAX")
+            if type(b) == list:
+                c = a<b[0]
+            else:
+                c = a<b
+            return(c)
 
         elif self.value == 'OR':
             # return (self.children[0].Evaluate(st)[0] or self.children[1].Evaluate(st)[0], BOOLEAN)
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("OR EBX, EAX")
             CodeGen.write("MOV EBX, EAX")
+            if type(b) == list:
+                c = (a or b[0])
+            else:
+                c = (a or b)
+            return(c)
 
         elif self.value == 'AND':
 
-            self.children[0].Evaluate(st)
+            a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
-            self.children[1].Evaluate(st)
+            b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("AND EBX, EAX")
             CodeGen.write("MOV EBX, EAX")
+
+            if type(b) == list:
+                c = (a and b[0])
+            else:
+                c = (a and b)
+            return(c)
 
             # return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
 
@@ -548,7 +603,7 @@ class IntVal(Node):
 
     def Evaluate(self, st):
         CodeGen.write("MOV EBX, {0}".format (self.value))
-        # return (self.value, INTEGER)
+        return self.value
 
 class NoOp(Node):
     def __init__(self, valor, filho):
@@ -568,7 +623,7 @@ class AssignmentOp(Node):
 
     def Evaluate(self, st):
         st.setter(self.children[0], self.children[1].Evaluate(st))
-        CodeGen.write("MOV [EBP-{0}], EBX".format(st.getter(self.children[0])))
+        CodeGen.write("MOV [EBP-{0}], EBX".format(st.getter(self.children[0])[2]))
 
 
 class PrintOp(Node):
@@ -591,7 +646,11 @@ class IdentifierOp(Node):
         self.id = Node.newID()
 
     def Evaluate(self, st):
-        return st.getter(self.value)
+        a = st.getter(self.value)
+        CodeGen.write("MOV EBX, [EBP-{0}]".format(a[2]))
+        # CodeGen.write("PUSH EBX")
+        
+        return a
 
 class StatementsOp(Node):
     def __init__(self, valor, filho):
@@ -695,6 +754,7 @@ class BoolVal(Node):
     def Evaluate(self, st):
         # return (self.value, BOOLEAN)
         CodeGen.write("MOV EBX, {0}".format (self.value))
+        return self.value
 
 #Dicionario de variaveis
 class SymbolTable:
@@ -711,7 +771,8 @@ class SymbolTable:
     def setter(self, var, val):
         if var in self.dic_variavel:
             # if self.dic_variavel[var][1] == val[1]:
-            self.dic_variavel[var] = val
+
+            self.dic_variavel[var][0] = val
         #     else: 
         #         raise ValueError("erro: tipo diferente de variável")
         else:
@@ -732,12 +793,12 @@ class PrePro:
 
 st = SymbolTable()
 
-if len(sys.argv) == 1:
-    raise ValueError("erro: arquivo de entrada não inserido ")
-script = sys.argv[0]
-filename = sys.argv[1]
+# if len(sys.argv) == 1:
+#     raise ValueError("erro: arquivo de entrada não inserido ")
+# script = sys.argv[0]
+# filename = sys.argv[1]
 
-# filename = 'teste1.vbs'
+filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
