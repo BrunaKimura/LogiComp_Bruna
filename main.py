@@ -441,137 +441,91 @@ class BinOp(Node):
 
     def Evaluate(self, st):
         if self.value == '+':
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("ADD EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
-            if type(b) == list:
-                c = a+b[0]
-            else:
-                c = a+b
-            return(c)
+            return a+b
 
         elif self.value == '-':
-            # return (self.children[0].Evaluate(st)[0] - self.children[1].Evaluate(st)[0], INTEGER)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("SUB EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
 
-            if type(b) == list:
-                c = a-b[0]
-            else:
-                c = a-b
-            return(c)
+            return a-b
 
         elif self.value == '*':
-            # return (self.children[0].Evaluate(st)[0] * self.children[1].Evaluate(st)[0], INTEGER)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("IMUL EBX")
             CodeGen.write("MOV EBX, EAX")
-
-            if type(b) == list:
-                c = a*b[0]
-            else:
-                c = a*b
-            return(c)
-        
+            return a*b 
+            
         elif self.value == '/':
-            # return (self.children[0].Evaluate(st)[0] // self.children[1].Evaluate(st)[0], INTEGER)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("IDIV EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
 
-            if type(b) == list:
-                c = a // b[0]
-            else:
-                c = a // b
-            return(c)
+            return a//b
         
         elif self.value == '=':
-            # return (self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0], BOOLEAN)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_je")
             
-            if type(b) == list:
-                c = (a == b[0])
-            else:
-                c = (a == b)
-            return(c)
+            return (a == b)
 
         elif self.value == '>':
-            # return (self.children[0].Evaluate(st)[0] > self.children[1].Evaluate(st)[0], BOOLEAN)
             a = self.children[0].Evaluate(st)[0]
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_jg")
-            
-            if type(b) == list:
-                c = a>b[0]
-            else:
-                c = a>b
-            return(c)
+            return a>b
 
         elif self.value == '<':
-            # return (self.children[0].Evaluate(st)[0] < self.children[1].Evaluate(st)[0], BOOLEAN)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("CMP EAX, EBX")
             CodeGen.write("CALL binop_jl")
-            if type(b) == list:
-                c = a<b[0]
-            else:
-                c = a<b
-            return(c)
+            return a<b
 
         elif self.value == 'OR':
-            # return (self.children[0].Evaluate(st)[0] or self.children[1].Evaluate(st)[0], BOOLEAN)
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("OR EBX, EAX")
             CodeGen.write("MOV EBX, EAX")
-            if type(b) == list:
-                c = (a or b[0])
-            else:
-                c = (a or b)
-            return(c)
+            
+            return a or b
 
         elif self.value == 'AND':
 
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
             CodeGen.write("AND EBX, EAX")
             CodeGen.write("MOV EBX, EAX")
 
-            if type(b) == list:
-                c = (a and b[0])
-            else:
-                c = (a and b)
-            return(c)
-
-            # return (self.children[0].Evaluate(st)[0] and self.children[1].Evaluate(st)[0], BOOLEAN)
+            return a and b
 
 
 class UnOp(Node):
@@ -582,18 +536,12 @@ class UnOp(Node):
 
     def Evaluate(self, st):
         if self.value == '-':
-            # return (-self.children[0].Evaluate(st), INTEGER)
             BinOp("*", [self.children[0].Evaluate(st), -1])
         elif self.value == '+':
-            # return (self.children[0].Evaluate(st), INTEGER)
             BinOp("*", [self.children[0].Evaluate(st), 1])
         else:
             self.children[0].Evaluate(st)
             CodeGen.write("NOT EBX")
-            # if self.children[0].Evaluate(st)[0] == True:
-            #     return (False, BOOLEAN)
-            # else:
-            #     return (True, BOOLEAN)
 
 class IntVal(Node):
     def __init__(self, valor, filho):
@@ -633,7 +581,6 @@ class PrintOp(Node):
         self.id = Node.newID()
 
     def Evaluate(self, st):
-        # print(self.children[0].Evaluate(st)[0])
         self.children[0].Evaluate(st)
         CodeGen.write("PUSH EBX")
         CodeGen.write("CALL print")
@@ -648,9 +595,8 @@ class IdentifierOp(Node):
     def Evaluate(self, st):
         a = st.getter(self.value)
         CodeGen.write("MOV EBX, [EBP-{0}]".format(a[2]))
-        # CodeGen.write("PUSH EBX")
         
-        return a
+        return a[0]
 
 class StatementsOp(Node):
     def __init__(self, valor, filho):
@@ -752,7 +698,6 @@ class BoolVal(Node):
         self.id = Node.newID()
 
     def Evaluate(self, st):
-        # return (self.value, BOOLEAN)
         CodeGen.write("MOV EBX, {0}".format (self.value))
         return self.value
 
@@ -770,11 +715,9 @@ class SymbolTable:
 
     def setter(self, var, val):
         if var in self.dic_variavel:
-            # if self.dic_variavel[var][1] == val[1]:
 
             self.dic_variavel[var][0] = val
-        #     else: 
-        #         raise ValueError("erro: tipo diferente de variável")
+
         else:
             raise ValueError("erro: variável inexistente")
 
