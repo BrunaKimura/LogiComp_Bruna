@@ -255,7 +255,7 @@ class Parser:
                         Parser.tokens.selectNext()
                         
                 lista_filhos.append(lista_if)
-                if len(lista_else)>1:
+                if len(lista_else)>=1:
                     lista_filhos.append(lista_else)
 
                 if Parser.tokens.actual.type == 'END':
@@ -489,7 +489,7 @@ class BinOp(Node):
             return (a == b)
 
         elif self.value == '>':
-            a = self.children[0].Evaluate(st)[0]
+            a = self.children[0].Evaluate(st)
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
@@ -647,7 +647,6 @@ class IfOp(Node):
     def Evaluate(self, st):
         self.children[0].Evaluate(st)
         CodeGen.write("CMP EBX, False")
-
         if len(self.children) == 3:
             CodeGen.write("JE ELSE_{0}".format(self.id))
 
@@ -666,7 +665,7 @@ class IfOp(Node):
             for e in self.children[1]:
                 e.Evaluate(st)
         
-        CodeGen.write("EXIT_{0}".format(self.id))
+        CodeGen.write("EXIT_{0}:".format(self.id))
 
 class VarDec(Node):
     def __init__(self, valor, filho):
