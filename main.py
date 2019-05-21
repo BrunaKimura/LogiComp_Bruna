@@ -680,7 +680,7 @@ class WhileOp(Node):
         for e in self.children[1]:
             e.Evaluate(st)
 
-        CodeGen.write("JMP_LOOP_{0}".format(self.id))
+        CodeGen.write("JMP LOOP_{0}".format(self.id))
         CodeGen.write("EXIT_{0}:".format(self.id))
 
 class InputOp(Node):
@@ -793,12 +793,12 @@ class PrePro:
 
 st = SymbolTable()
 
-# if len(sys.argv) == 1:
-#     raise ValueError("erro: arquivo de entrada não inserido ")
-# script = sys.argv[0]
-# filename = sys.argv[1]
+if len(sys.argv) == 1:
+    raise ValueError("erro: arquivo de entrada não inserido ")
+script = sys.argv[0]
+filename = sys.argv[1]
 
-filename = 'entrada.vbs'
+# filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
