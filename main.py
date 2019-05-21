@@ -13,9 +13,10 @@ class CodeGen():
 
     @staticmethod
     def flush():
-        pass
-        with open (output, 'w') as file:
-            outfile = file.write() + "\n"
+        with open ("output.txt", 'w') as file:
+            for linha in CodeGen.lista:
+                file.write(linha + "\n") 
+
         #Abre o arquivo de saida para escrita
         # escreve os pre-comandos
         # escreve os comandos da lista
@@ -611,7 +612,7 @@ class WhileOp(Node):
     def Evaluate(self, st):
         CodeGen.write("LOOP_{0}:".format(self.id))
 
-        self.children[0].Evaluate(st)[0]
+        self.children[0].Evaluate(st)
 
         CodeGen.write("CMP EBX, False")
         
@@ -670,9 +671,9 @@ class VarDec(Node):
 
     def Evaluate(self, st):
         if self.children[1].value == 'INTEGER':
-            st.creator(self.children[0], (0, self.children[1].value))
+            st.creator(self.children[0], [0, self.children[1].value])
         else:
-            st.creator(self.children[0], (True, self.children[1].value))
+            st.creator(self.children[0], [True, self.children[1].value])
         
         CodeGen.write("PUSH DWORD 0")
         
@@ -709,10 +710,10 @@ class SymbolTable:
 
     def setter(self, var, val):
         if var in self.dic_variavel:
-            if self.dic_variavel[var][1] == val[1]:
-                self.dic_variavel[var] = val
-            else: 
-                raise ValueError("erro: tipo diferente de variável")
+            # if self.dic_variavel[var][1] == val[1]:
+            self.dic_variavel[var] = val
+        #     else: 
+        #         raise ValueError("erro: tipo diferente de variável")
         else:
             raise ValueError("erro: variável inexistente")
 
@@ -735,7 +736,6 @@ if len(sys.argv) == 1:
     raise ValueError("erro: arquivo de entrada não inserido ")
 script = sys.argv[0]
 filename = sys.argv[1]
-output = sys.argv[2]
 
 # filename = 'teste1.vbs'
 
@@ -746,3 +746,4 @@ with open (filename, 'r') as file:
 entrada = entrada.replace("\\n","\n")
 saida = Parser.run(entrada)
 saida.Evaluate(st)
+CodeGen.flush()
