@@ -1,8 +1,8 @@
 import re
 import sys
 
-reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "MAIN", "SUB", "DIM", "AS", "INTEGER", "BOOLEAN", "TRUE", "FALSE"]
-PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, MAIN, SUB, DIM, AS, INTEGER, BOOLEAN, TRUE, FALSE = reserved
+reserved = ["PRINT", "END", "OR", "AND", "INPUT", "WHILE", "IF", "THEN", "WEND", "ELSE", "NOT", "SUB", "DIM", "AS", "INTEGER", "BOOLEAN", "TRUE", "FALSE", "CALL", "FUNCTION"]
+PRINT, END, OR, AND, INPUT, WHILE, IF, THEN, WEND, ELSE, NOT, SUB, DIM, AS, INTEGER, BOOLEAN, TRUE, FALSE, CALL, FUNCTION = reserved
 
 class Token:
     def __init__(self, t, v):
@@ -84,6 +84,11 @@ class Tokenizer:
                 self.actual = new_token
                 self.position+=1
 
+            elif self.origin[self.position] == ',':
+                new_token = Token("comma", ",")
+                self.actual = new_token
+                self.position+=1
+
             elif self.origin[self.position].isalpha():
                 word+=self.origin[self.position]
                 self.position+=1
@@ -124,29 +129,64 @@ class Tokenizer:
 class Parser:
 
     def parserProgram():
+
+        lista_statements = []
+        while Parser.tokens.actual.type != "eof":
+            if Parser.tokens.actual.type == 'SUB':
+                lista_statements.append(Parser.parserSubDec())
+                
+            elif Parser.tokens.actual.type == 'FUNCTION':
+                lista_statements.append(Parser.parserFuncDec())
+
+            else:
+                Parser.tokens.selectNext()
+                
+        # lista_main = st.getter("MAIN")
+        lista_statements.append(FuncCall("MAIN",[]))
+            
+        return StatementsOp("statement", lista_statements)
+        
+
+    def parserSubDec():
+        lista_SubDec = []
+        lista_variavel=[]
         if Parser.tokens.actual.type == 'SUB':
             Parser.tokens.selectNext()
-            if Parser.tokens.actual.type == 'MAIN':
-                VarDec("VarDec", [MAIN, (MAIN, "")])
+            if Parser.tokens.actual.type == 'identifier':
+                nome_func = Parser.tokens.actual.value
                 Parser.tokens.selectNext()
                 if Parser.tokens.actual.type == '(':
                     Parser.tokens.selectNext()
+                    
+                    while Parser.tokens.actual.type != ')':
+                        if Parser.tokens.actual.type == 'identifier':
+                            variavel = Parser.tokens.actual.value
+                            Parser.tokens.selectNext()
+                            if Parser.tokens.actual.type == 'AS':
+                                Parser.tokens.selectNext()
+                                if Parser.tokens.actual.type == 'type':
+                                    lista_variavel.append(VarDec("VarDec", [variavel, Parser.parserType()]))
+                                    Parser.tokens.selectNext()
+                                    if Parser.tokens.actual.type == 'comma':
+                                        Parser.tokens.selectNext()
+
                     if Parser.tokens.actual.type == ')':
                         Parser.tokens.selectNext()
                         if Parser.tokens.actual.type == 'lb':
                             Parser.tokens.selectNext()
 
-                            lista_resultado = []
+
                             while Parser.tokens.actual.type != 'END':
-                                lista_resultado.append(Parser.parserStatement())
+                                lista_SubDec.append(Parser.parserStatement())
                                 if Parser.tokens.actual.type == 'lb':
                                     Parser.tokens.selectNext()
 
                             Parser.tokens.selectNext()
+                            lista_variavel.append(StatementsOp("statements", lista_SubDec))
 
                             if Parser.tokens.actual.type == 'SUB':
                                 Parser.tokens.selectNext()
-                                return StatementsOp("statement", lista_resultado)
+                                return SubDec(nome_func, lista_variavel)
                             
                             else:
                                 raise ValueError("erro program: não fechou sub")
@@ -165,6 +205,67 @@ class Parser:
         else:
             raise ValueError("erro program: não abriu sub")
               
+
+    def parserFuncDec():
+        if Parser.tokens.actual.type == 'FUNCTION':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'identifier':
+                nome_func = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == '(':
+                    Parser.tokens.selectNext()
+                    lista_variaveis = []
+                    while Parser.tokens.actual.type != ')':
+                        if Parser.tokens.actual.type == 'identifier':
+                            variavel = Parser.tokens.actual.value
+                            Parser.tokens.selectNext()
+                            if Parser.tokens.actual.type == 'AS':
+                                Parser.tokens.selectNext()
+                                if Parser.tokens.actual.type == 'type':
+                                    lista_variaveis.append(VarDec("VarDec", [variavel, Parser.parserType()]))
+                                    Parser.tokens.selectNext()
+                                    if Parser.tokens.actual.type == 'comma':
+                                        Parser.tokens.selectNext()
+
+
+                    if Parser.tokens.actual.type == ')':
+                        Parser.tokens.selectNext()
+                        if Parser.tokens.actual.type == 'AS':
+                            Parser.tokens.selectNext()
+                            if Parser.tokens.actual.type == 'type':
+                                lista_resultado = [Parser.parserType]+lista_variaveis
+                                Parser.tokens.selectNext()
+                                if Parser.tokens.actual.type == 'lb':
+                                    Parser.tokens.selectNext()
+                            lista_statement = []
+                            while Parser.tokens.actual.type != 'END':
+                                lista_statement.append(Parser.parserStatement())
+                                if Parser.tokens.actual.type == 'lb':
+                                    Parser.tokens.selectNext()
+
+                            Parser.tokens.selectNext()
+                            lista_resultado.append(StatementsOp("statement", lista_statement))
+                            if Parser.tokens.actual.type == 'FUNCTION':
+                                Parser.tokens.selectNext()
+                                return FuncDec(nome_func, lista_resultado)
+                            
+                            else:
+                                raise ValueError("erro program: não fechou sub")
+
+                        else:
+                            raise ValueError("erro program: não pilou linha")
+            
+                    else:
+                        raise ValueError("erro program: não fechou parênteses")
+        
+                else:
+                    raise ValueError("erro program: não abriu parênteses")
+    
+            else:
+                raise ValueError("erro program: não abriu main")
+        else:
+            raise ValueError("erro program: não abriu sub")
+
 
     def parserStatement():
         if Parser.tokens.actual.type == 'identifier':
@@ -256,6 +357,23 @@ class Parser:
                     if Parser.tokens.actual.type == 'type':
                         resultado = VarDec("VarDec", [variavel, Parser.parserType()])
                         Parser.tokens.selectNext()
+
+        elif Parser.tokens.actual.type == 'CALL':
+            Parser.tokens.selectNext()
+            if Parser.tokens.actual.type == 'identifier':
+                nome = Parser.tokens.actual.value
+                Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == '(':
+                    Parser.tokens.selectNext()
+                    lista_relexp = []
+                    while Parser.tokens.actual.type != ')':
+                        lista_relexp.append(Parser.parserRelExpression())
+                        if Parser.tokens.actual.type == 'comma':
+                            Parser.tokens.selectNext()
+                    
+                    if Parser.tokens.actual.type == ')':
+                        resultado = FuncCall(nome, lista_relexp)
+
         else:
             resultado = NoOp(0, [])
 
@@ -360,8 +478,20 @@ class Parser:
             resultado = UnOp('NOT', children)
             
         elif Parser.tokens.actual.type == 'identifier':
-            resultado = IdentifierOp(Parser.tokens.actual.value, [])
+            a = Parser.tokens.actual.value
             Parser.tokens.selectNext()
+            lista_relexp = []
+            if Parser.tokens.actual.type == '(':
+                Parser.tokens.selectNext()
+                while Parser.tokens.actual.type != ')':
+                    lista_relexp.append(Parser.parserRelExpression())
+                    if Parser.tokens.actual.type == 'comma':
+                        Parser.tokens.selectNext()
+                if Parser.tokens.actual.type == ')':
+                    Parser.tokens.selectNext()
+                resultado = FuncCall(a, lista_relexp)
+            else:
+                resultado = IdentifierOp(a, [])
 
         elif Parser.tokens.actual.type == 'INPUT':
             resultado = InputOp('',[])
@@ -379,12 +509,7 @@ class Parser:
         new_code = PrePro.filter_t(code)
         Parser.tokens = Tokenizer(new_code)
         a = Parser.parserProgram()
-        while Parser.tokens.actual.type == 'lb':
-            Parser.tokens.selectNext()
-        if Parser.tokens.actual.type == "eof":
-            return a
-        else:
-            raise ValueError("erro: eof não encontrado")
+        return a
 
 
 #nós e operadores
@@ -547,6 +672,54 @@ class BoolVal(Node):
     def Evaluate(self, st):
         return (self.value, BOOLEAN)
 
+class SubDec(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        st.creator(self.value, (self, "SUB"))
+
+class FuncDec(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+
+    def Evaluate(self, st):
+        st.creator(self.value, (self, "FUNC"))
+
+class FuncCall(Node):
+    def __init__(self, valor, filho):
+        self.value = valor
+        self.children = filho
+    
+    def Evaluate(self, st):
+        no = st.getter(self.value)
+
+        nova = SymbolTable() #AQUI quando alterar a segunda parte
+        inic = 0
+        if no[1] == 'FUNC':
+            tipo = no[0].children[0].Evaluate(st)
+            # Declara o nome da funcao na nova symboltable com o tipo acima
+            nova.creator(self.value, tipo)
+            inic = 1
+        
+
+        for i in range(inic,len(no[0].children)-1):
+            no[0].children[i].Evaluate(nova) # Deveriam ser VarDecs (argumentos)
+            nome = no[0].children[i].value     
+            # atribui os valores dos argumentos na nova symboltable na ordem correta
+            valor = self.children[i-inic].Evaluate(st)
+            nova.setter(nome, valor)
+
+
+        no[0].children[len(no[0].children)-1].Evaluate(nova)
+
+        # Se função, pega o valor da funcao na nova symboltable e retorna com o tipo
+        if no[1] == 'FUNC':
+            return nova.getter(self.value)
+            
+
 #Dicionario de variaveis
 class SymbolTable:
     def __init__(self):
@@ -580,12 +753,12 @@ class PrePro:
 
 st = SymbolTable()
 
-if len(sys.argv) == 1:
-    raise ValueError("erro: arquivo de entrada não inserido ")
-script = sys.argv[0]
-filename = sys.argv[1]
+# if len(sys.argv) == 1:
+#     raise ValueError("erro: arquivo de entrada não inserido ")
+# script = sys.argv[0]
+# filename = sys.argv[1]
 
-# filename = 'teste1.vbs'
+filename = 'entrada.vbs'
 
 with open (filename, 'r') as file:
     entrada = file.read() + "\n"
