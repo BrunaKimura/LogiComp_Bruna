@@ -233,7 +233,7 @@ class Parser:
                         if Parser.tokens.actual.type == 'AS':
                             Parser.tokens.selectNext()
                             if Parser.tokens.actual.type == 'type':
-                                lista_resultado = [Parser.parserType]+lista_variaveis
+                                lista_resultado = [Parser.parserType()]+lista_variaveis
                                 Parser.tokens.selectNext()
                                 if Parser.tokens.actual.type == 'lb':
                                     Parser.tokens.selectNext()
@@ -696,18 +696,18 @@ class FuncCall(Node):
     def Evaluate(self, st):
         no = st.getter(self.value)
 
-        nova = SymbolTable() #AQUI quando alterar a segunda parte
+        nova = SymbolTable(st) #AQUI quando alterar a segunda parte
         inic = 0
         if no[1] == 'FUNC':
             tipo = no[0].children[0].Evaluate(st)
             # Declara o nome da funcao na nova symboltable com o tipo acima
-            nova.creator(self.value, tipo)
+            nova.creator(self.value, (0, tipo))
             inic = 1
         
 
         for i in range(inic,len(no[0].children)-1):
             no[0].children[i].Evaluate(nova) # Deveriam ser VarDecs (argumentos)
-            nome = no[0].children[i].value     
+            nome = no[0].children[i].children[0]     
             # atribui os valores dos argumentos na nova symboltable na ordem correta
             valor = self.children[i-inic].Evaluate(st)
             nova.setter(nome, valor)
@@ -722,14 +722,18 @@ class FuncCall(Node):
 
 #Dicionario de variaveis
 class SymbolTable:
-    def __init__(self):
+    def __init__(self, ancestor):
         self.dic_variavel = {}
+        self.ancestor = ancestor
 
     def getter(self, var):
         if var in self.dic_variavel:
             return self.dic_variavel[var]
         else:
-            raise ValueError("erro: variável inexistente")
+            if self.ancestor == None:
+                raise ValueError("erro: variável inexistente")
+            else:
+                return self.ancestor.getter(var)
 
     def setter(self, var, val):
         if var in self.dic_variavel:
@@ -751,7 +755,7 @@ class PrePro:
     def filter_t(code):
         return re.sub("'.*\n", "" , code, count=0, flags=0)
 
-st = SymbolTable()
+st = SymbolTable(None)
 
 # if len(sys.argv) == 1:
 #     raise ValueError("erro: arquivo de entrada não inserido ")
