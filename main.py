@@ -701,7 +701,7 @@ class FuncCall(Node):
         if no[1] == 'FUNC':
             tipo = no[0].children[0].Evaluate(st)
             # Declara o nome da funcao na nova symboltable com o tipo acima
-            nova.creator(self.value, (0, tipo))
+            nova.creator(self.value, (None, tipo))
             inic = 1
         
 
@@ -728,6 +728,12 @@ class SymbolTable:
 
     def getter(self, var):
         if var in self.dic_variavel:
+            if self.dic_variavel[var][0] == None:
+                if self.ancestor == None:
+                    raise ValueError("erro: variável inexistente")
+                else:
+                    return self.ancestor.getter(var)
+
             return self.dic_variavel[var]
         else:
             if self.ancestor == None:
