@@ -473,7 +473,7 @@ class BinOp(Node):
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
-            CodeGen.write("IDIV EAX, EBX")
+            CodeGen.write("IDIV EBX")
             CodeGen.write("MOV EBX, EAX")
 
             return a//b
@@ -511,7 +511,7 @@ class BinOp(Node):
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
-            CodeGen.write("OR EBX, EAX")
+            CodeGen.write("OR EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
             
             return a or b
@@ -522,7 +522,7 @@ class BinOp(Node):
             CodeGen.write("PUSH EBX")
             b = self.children[1].Evaluate(st)
             CodeGen.write("POP EAX")
-            CodeGen.write("AND EBX, EAX")
+            CodeGen.write("AND EAX, EBX")
             CodeGen.write("MOV EBX, EAX")
 
             return a and b
