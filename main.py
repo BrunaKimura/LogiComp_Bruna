@@ -372,6 +372,7 @@ class Parser:
                             Parser.tokens.selectNext()
                     
                     if Parser.tokens.actual.type == ')':
+                        Parser.tokens.selectNext()
                         resultado = FuncCall(nome, lista_relexp)
 
         else:
