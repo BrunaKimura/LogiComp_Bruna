@@ -1,43 +1,12 @@
 Sub main()
-    ' adaptado da sabrina
+    ' bool ops
+    Dim bt as boolean
+    Dim bf as boolean
+    bt = True
+    bf = False
 
-    dim fizz as integer
-    dim buzz as integer
-    dim fizzbuzz as integer
-    dim n as integer
-    dim tres as integer
-    dim cinco as integer
-    dim flag as boolean
-
-    n = 15
-    fizz = 30
-    buzz = 50
-    fizzbuzz = 35
-    flag = True
-
-    while n > 0
-        print n
-
-        tres = (n - (n / 3 * 3))
-        cinco = (n - (n / 5 * 5))
-        
-
-        if (tres = 0) and (cinco = 0) then
-            print fizzbuzz
-            flag = False
-        end if
-
-        if (tres = 0) and (flag = True) then
-            print fizz
-            flag = False
-        end if
-
-        if (cinco = 0) and (flag = True) then
-            print buzz
-            flag = False
-        end if
-
-        flag = True
-        n = n - 1
-    wend
+    print bf and bt
+    print bf or bt
+    print not(not(bf))
+    print not((bt and bf) or bf)
 end sub
