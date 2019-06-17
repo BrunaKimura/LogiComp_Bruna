@@ -541,7 +541,9 @@ class UnOp(Node):
             BinOp("*", [self.children[0].Evaluate(st), 1])
         else:
             self.children[0].Evaluate(st)
-            CodeGen.write("NOT EBX")
+            CodeGen.write("SUB EBX, 1")
+            CodeGen.write("SBB EBX, EBX")
+            CodeGen.write("AND EBX, 1")
 
 class IntVal(Node):
     def __init__(self, valor, filho):
